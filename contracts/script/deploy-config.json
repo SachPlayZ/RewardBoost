@@ -1,0 +1,58 @@
+{
+  "networks": {
+    "ethereum": {
+      "chainId": 1,
+      "rpcUrl": "https://eth-mainnet.alchemyapi.io/v2/YOUR_API_KEY",
+      "explorerUrl": "https://etherscan.io",
+      "tokens": {
+        "usdc": "0xA0b86a33E6E5e9eb02b6816E4D8f5C9a6c8a9A1B"
+      }
+    },
+    "sepolia": {
+      "chainId": 11155111,
+      "rpcUrl": "https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY",
+      "explorerUrl": "https://sepolia.etherscan.io",
+      "tokens": {
+        "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+      }
+    },
+    "polygon": {
+      "chainId": 137,
+      "rpcUrl": "https://polygon-mainnet.alchemyapi.io/v2/YOUR_API_KEY",
+      "explorerUrl": "https://polygonscan.com",
+      "tokens": {
+        "usdc": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+      }
+    },
+    "mumbai": {
+      "chainId": 80001,
+      "rpcUrl": "https://polygon-mumbai.g.alchemy.com/v2/YOUR_API_KEY",
+      "explorerUrl": "https://mumbai.polygonscan.com",
+      "tokens": {
+        "usdc": "0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747"
+      }
+    },
+    "arbitrum": {
+      "chainId": 42161,
+      "rpcUrl": "https://arb-mainnet.g.alchemy.com/v2/YOUR_API_KEY",
+      "explorerUrl": "https://arbiscan.io",
+      "tokens": {
+        "usdc": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
+      }
+    },
+    "sei": {
+      "chainId": 1329,
+      "rpcUrl": "https://evm-rpc.sei-apis.com",
+      "explorerUrl": "https://seitrace.com",
+      "tokens": {
+        "usdc": "0x...",
+        "sei": "0x..."
+      }
+    }
+  },
+  "deployment": {
+    "minimumRewardAmount": "50000000",
+    "platformFeePercentage": "250",
+    "guaranteedRewardPerUser": "10000"
+  }
+}
