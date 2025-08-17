@@ -3,10 +3,12 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { Providers } from "./providers";
+import Navigation from "@/components/navigation";
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
+  title: "QuestRewards - Web3 Quest & Reward Platform",
+  description:
+    "Create and participate in Web3 quests with blockchain-powered rewards. Build communities, engage users, and earn tokens through gamified experiences.",
   generator: "v0.dev",
 };
 
@@ -27,7 +29,10 @@ html {
         `}</style>
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navigation />
+          {children}
+        </Providers>
       </body>
     </html>
   );
