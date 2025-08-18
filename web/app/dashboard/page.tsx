@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuestContract } from "@/hooks/use-quest-contract";
 import { RewardDistributionMethod } from "@/lib/types/campaign";
+import { StreakCard, MonthlyRaffleCard } from "@/components/streaks/StreakCard";
 import {
   Trophy,
   Zap,
@@ -443,6 +444,11 @@ export default function DashboardPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Daily Streaks */}
+            <StreakCard />
+
+            {/* Monthly Raffle */}
+            <MonthlyRaffleCard />
             {/* User Profile */}
             <Card>
               <CardHeader>

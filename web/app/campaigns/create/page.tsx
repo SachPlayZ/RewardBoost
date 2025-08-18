@@ -144,16 +144,20 @@ export default function CreateCampaignPage() {
       // Here you would integrate with your contract
       console.log("Creating campaign:", data);
 
-      // Example of calling the contract (you'll need to adjust based on your token addresses)
-      // createCampaign({
-      //   rewardToken: '0x...', // USDC or SEI token address
-      //   distributionMethod: data.rewardConfig.distributionMethod === DistributionMethod.LUCKY_DRAW ? 0 : 1,
-      //   startTime: data.startDate.getTime(),
-      //   endTime: data.endDate.getTime(),
-      //   maxParticipants: data.maxParticipants,
-      //   totalRewardAmount: data.rewardConfig.amount.toString(),
-      //   numberOfWinners: data.rewardConfig.numberOfWinners || data.maxParticipants,
-      // });
+      // Create campaign with proper token handling
+      createCampaign({
+        rewardTokenType: data.rewardConfig.type as "USDC" | "SEI",
+        distributionMethod:
+          data.rewardConfig.distributionMethod === DistributionMethod.LUCKY_DRAW
+            ? 0
+            : 1,
+        startTime: data.startDate.getTime(),
+        endTime: data.endDate.getTime(),
+        maxParticipants: data.maxParticipants,
+        totalRewardAmount: data.rewardConfig.amount.toString(),
+        numberOfWinners:
+          data.rewardConfig.numberOfWinners || data.maxParticipants,
+      });
     } catch (error) {
       console.error("Error creating campaign:", error);
     }

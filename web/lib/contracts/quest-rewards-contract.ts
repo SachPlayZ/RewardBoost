@@ -311,7 +311,7 @@ export const QuestRewardsContractABI = [
 
 // Contract address - update this with your deployed contract address
 // Example: Replace with your actual deployed contract address
-export const QUEST_REWARDS_CONTRACT_ADDRESS = "0x742d35Cc6635C0532925a3b8D7Fb8d22567b9E52" as const;
+export const QUEST_REWARDS_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_QUEST_REWARDS_CONTRACT_ADDRESS as `0x${string}` || "0x742d35Cc6635C0532925a3b8D7Fb8d22567b9E52" as const;
 
 // Enum mappings
 export enum RewardDistributionMethod {
