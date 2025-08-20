@@ -9,8 +9,14 @@ export function getConfig() {
       storage: cookieStorage,
     }),
     transports: {
-      [seiTestnet.id]: http(),
-      [sei.id]: http(),
+      [seiTestnet.id]: http(
+        process.env.NEXT_PUBLIC_RPC_URL_SEI_TESTNET || 
+        "https://evm-rpc-testnet.sei-apis.com"
+      ),
+      [sei.id]: http(
+        process.env.NEXT_PUBLIC_RPC_URL_SEI_MAINNET || 
+        "https://rpc.sei.com"
+      ),
     },
   });
 }

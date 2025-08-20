@@ -16,38 +16,26 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export function Header() {
   const navItems = [
-    { name: "Features", href: "#features-section" },
-    { name: "Campaigns", href: "#pricing-section" },
-    { name: "Testimonials", href: "#testimonials-section" },
+    { name: "Campaigns", href: "/campaigns" },
+    { name: "Dashboard", href: "/dashboard" },
   ];
 
-  const handleScroll = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    href: string
-  ) => {
-    e.preventDefault();
-    const targetId = href.substring(1); // Remove '#' from href
-    const targetElement = document.getElementById(targetId);
-    if (targetElement) {
-      targetElement.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  // No special click handling needed for page navigation
 
   return (
     <header className="w-full py-4 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <span className="text-foreground text-xl font-semibold">
-              ContentFlow
-            </span>
+            <Link href="/" className="text-foreground text-xl font-semibold">
+              Reward Boost
+            </Link>
           </div>
           <nav className="hidden md:flex items-center gap-2">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={(e) => handleScroll(e, item.href)} // Add onClick handler
                 className="text-[#888888] hover:text-foreground px-4 py-2 rounded-full font-medium transition-colors"
               >
                 {item.name}
@@ -80,7 +68,6 @@ export function Header() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    onClick={(e) => handleScroll(e, item.href)} // Add onClick handler
                     className="text-[#888888] hover:text-foreground justify-start text-lg py-2"
                   >
                     {item.name}

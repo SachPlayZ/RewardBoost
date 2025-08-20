@@ -187,7 +187,7 @@ The platform is now fully featured and production-ready with:
 
 ### Next Steps for Deployment
 
-1. Deploy the QuestRewardsContract to SEI network
+1. Deploy the QuestRewardsContract to SEI network using RPC: `https://evm-rpc-testnet.sei-apis.com`
 2. Update contract address in environment variables
 3. Configure actual token addresses for USDC/SEI
 4. Set up backend API endpoints for data persistence

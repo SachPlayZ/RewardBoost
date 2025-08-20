@@ -69,8 +69,11 @@ A comprehensive Web3 quest and reward platform built with Next.js, wagmi, and sm
 3. **Configure environment**
 
    ```bash
-   cp .env.example .env.local
-   # Add your environment variables
+   cp env.example .env.local
+   # Update with your specific values:
+   # - Contract addresses after deployment
+   # - API keys for services
+   # - RPC URLs (SEI testnet: https://evm-rpc-testnet.sei-apis.com)
    ```
 
 4. **Update contract address**
@@ -263,7 +266,7 @@ endCampaignAndDistribute(campaignId: uint256)
 
 ### Smart Contract Deployment
 
-1. **Deploy QuestRewardsContract**: Use Foundry or Hardhat
+1. **Deploy QuestRewardsContract**: Use Foundry or Hardhat with SEI testnet RPC: `https://evm-rpc-testnet.sei-apis.com`
 2. **Verify Contract**: Etherscan/block explorer verification
 3. **Update Frontend**: Set contract address in configuration
 4. **Test Integration**: Verify all contract interactions

@@ -59,7 +59,7 @@ const Navigation = () => {
               <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                 <Target className="h-4 w-4 text-white" />
               </div>
-              <span className="font-bold text-xl">QuestRewards</span>
+              <span className="font-bold text-xl">Reward Boost</span>
             </div>
           </Link>
 
