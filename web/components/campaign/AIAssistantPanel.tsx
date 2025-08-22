@@ -118,18 +118,8 @@ export function AIAssistantPanel({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <Card
-        className="w-full max-w-4xl max-h-[90vh] overflow-hidden"
-        style={{
-          background:
-            "rgba(30, 27, 75, 0.55)", // fallback for dark glass
-          boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-          backdropFilter: "blur(18px)",
-          WebkitBackdropFilter: "blur(18px)",
-          border: "1px solid rgba(255, 255, 255, 0.18)",
-        }}
-      >
-        <CardHeader className="border-b bg-transparent">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden ">
+        <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500">
@@ -150,15 +140,7 @@ export function AIAssistantPanel({
 
         <div className="flex h-[600px]">
           {/* Sidebar */}
-          <div
-            className="w-64 border-r bg-muted/30"
-            style={{
-              background: "rgba(255,255,255,0.10)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              borderRight: "1px solid rgba(255,255,255,0.12)",
-            }}
-          >
+          <div className="w-64 border-r bg-muted/30">
             <div className="p-4">
               <div className="space-y-2">
                 <Button

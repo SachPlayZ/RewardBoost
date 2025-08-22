@@ -62,14 +62,14 @@ export function useQuestContract() {
   }) => {
     const startTimestamp = BigInt(Math.floor(params.startTime / 1000));
     const endTimestamp = BigInt(Math.floor(params.endTime / 1000));
-    
+
     // Get the appropriate token address based on type
     const tokenAddress = getTokenAddress(params.rewardTokenType === 'SEI' ? 'WSEI' : 'USDC');
-    
+
     // Parse amount based on token decimals
     const tokenDecimals = TOKEN_METADATA[params.rewardTokenType].decimals;
     const parsedAmount = parseUnits(params.totalRewardAmount, tokenDecimals);
-    
+
     writeContract({
       address: QUEST_REWARDS_CONTRACT_ADDRESS,
       abi: QuestRewardsContractABI,
@@ -83,7 +83,7 @@ export function useQuestContract() {
         parsedAmount,
         BigInt(params.numberOfWinners),
       ],
-    });
+    } as any);
   }, [writeContract]);
 
   const joinCampaign = useCallback((campaignId: bigint) => {
@@ -92,7 +92,7 @@ export function useQuestContract() {
       abi: QuestRewardsContractABI,
       functionName: 'joinCampaign',
       args: [campaignId],
-    });
+    } as any);
   }, [writeContract]);
 
   const updateQuestScore = useCallback((params: {
@@ -105,7 +105,7 @@ export function useQuestContract() {
       abi: QuestRewardsContractABI,
       functionName: 'updateQuestScore',
       args: [params.campaignId, params.participant, BigInt(params.score)],
-    });
+    } as any);
   }, [writeContract]);
 
   const endCampaignAndDistribute = useCallback((campaignId: bigint) => {
@@ -114,8 +114,10 @@ export function useQuestContract() {
       abi: QuestRewardsContractABI,
       functionName: 'endCampaignAndDistribute',
       args: [campaignId],
-    });
+    } as any);
   }, [writeContract]);
+
+
 
   return {
     createCampaign,
@@ -126,6 +128,70 @@ export function useQuestContract() {
     error,
     data,
   };
+}
+
+// Read hooks for user dashboard
+export function useUserTotalQuestPoints(user: `0x${string}`) {
+  return useReadContract({
+    address: QUEST_REWARDS_CONTRACT_ADDRESS,
+    abi: QuestRewardsContractABI,
+    functionName: 'getUserTotalQuestPoints',
+    args: [user],
+  });
+}
+
+export function useUserTotalEarnings(user: `0x${string}`) {
+  return useReadContract({
+    address: QUEST_REWARDS_CONTRACT_ADDRESS,
+    abi: QuestRewardsContractABI,
+    functionName: 'getUserTotalEarnings',
+    args: [user],
+  });
+}
+
+export function useUserLevel(user: `0x${string}`) {
+  return useReadContract({
+    address: QUEST_REWARDS_CONTRACT_ADDRESS,
+    abi: QuestRewardsContractABI,
+    functionName: 'getUserLevel',
+    args: [user],
+  });
+}
+
+export function useQPForNextLevel(user: `0x${string}`) {
+  return useReadContract({
+    address: QUEST_REWARDS_CONTRACT_ADDRESS,
+    abi: QuestRewardsContractABI,
+    functionName: 'getQPForNextLevel',
+    args: [user],
+  });
+}
+
+export function useCampaignParticipants(campaignId: bigint) {
+  return useReadContract({
+    address: QUEST_REWARDS_CONTRACT_ADDRESS,
+    abi: QuestRewardsContractABI,
+    functionName: 'getParticipants',
+    args: [campaignId],
+  });
+}
+
+export function useCampaignWinners(campaignId: bigint) {
+  return useReadContract({
+    address: QUEST_REWARDS_CONTRACT_ADDRESS,
+    abi: QuestRewardsContractABI,
+    functionName: 'getWinners',
+    args: [campaignId],
+  });
+}
+
+export function useRewardEligibility(campaignId: bigint, user: `0x${string}`) {
+  return useReadContract({
+    address: QUEST_REWARDS_CONTRACT_ADDRESS,
+    abi: QuestRewardsContractABI,
+    functionName: 'isEligibleForReward',
+    args: [campaignId, user],
+  });
 }
 
 // Event watching hooks

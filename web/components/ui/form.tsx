@@ -177,3 +177,6 @@ export {
   FormMessage,
   FormField,
 };
+
+// Re-export for convenience in components to avoid direct dependency on react-hook-form in app code
+export { useFormContext } from "react-hook-form";

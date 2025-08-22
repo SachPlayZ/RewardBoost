@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { useFormContext, useFieldArray } from "react-hook-form";
-import { CampaignFormData, TaskType } from "@/lib/types/campaign";
+import { useFormContext } from "@/components/ui/form";
+import { CampaignFormData } from "@/lib/types/campaign";
 import {
   FormControl,
   FormDescription,
@@ -12,8 +12,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -24,6 +22,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -31,43 +30,25 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import {
-  Plus,
-  X,
   Calendar as CalendarIcon,
   Users,
   Twitter,
   Hash,
   AtSign,
   MessageSquare,
-  Target,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export function QuestConfigStep() {
-  const { control, watch, setValue } = useFormContext<CampaignFormData>();
-
-  const {
-    fields: stepFields,
-    append: appendStep,
-    remove: removeStep,
-  } = useFieldArray({
-    control,
-    name: "questSteps",
-  });
+  const { control, watch } = useFormContext<CampaignFormData>();
 
   const watchedStartDate = watch("startDate");
-  const watchedEndDate = watch("endDate");
 
-  const addStep = () => {
-    appendStep({
-      id: Date.now().toString(),
-      title: "",
-      instruction: "",
-      completionCriteria: "",
-      xpReward: 10,
-    });
-  };
+  // Set default values for compulsory tasks when component mounts
+  React.useEffect(() => {
+    // Note: Default values are now set in the form initialization
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -93,38 +74,111 @@ export function QuestConfigStep() {
           <FormField
             control={control}
             name="startDate"
-            render={({ field }) => (
+            render={({
+              field,
+            }: {
+              field: { value?: Date; onChange: (v?: Date) => void };
+            }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Start Date (UTC) *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
+                <FormControl>
+                  <div className="space-y-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(d) => {
+                            if (!d) {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const hours = field.value?.getUTCHours() ?? 0;
+                            const minutes = field.value?.getUTCMinutes() ?? 0;
+                            const combined = new Date(
+                              Date.UTC(
+                                d.getFullYear(),
+                                d.getMonth(),
+                                d.getDate(),
+                                hours,
+                                minutes
+                              )
+                            );
+                            field.onChange(combined);
+                          }}
+                          disabled={(date) => {
+                            const today = new Date();
+                            const todayUtc = new Date(
+                              Date.UTC(
+                                today.getUTCFullYear(),
+                                today.getUTCMonth(),
+                                today.getUTCDate()
+                              )
+                            );
+                            const dateUtc = new Date(
+                              Date.UTC(
+                                date.getFullYear(),
+                                date.getMonth(),
+                                date.getDate()
+                              )
+                            );
+                            return dateUtc < todayUtc;
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      step={60}
+                      value={(() => {
+                        const v = field.value;
+                        const hh = String(v?.getUTCHours() ?? 0).padStart(
+                          2,
+                          "0"
+                        );
+                        const mm = String(v?.getUTCMinutes() ?? 0).padStart(
+                          2,
+                          "0"
+                        );
+                        return `${hh}:${mm}`;
+                      })()}
+                      onChange={(e) => {
+                        const time = e.target.value; // HH:MM
+                        const [hhStr, mmStr] = time.split(":");
+                        const hh = Number(hhStr || 0);
+                        const mm = Number(mmStr || 0);
+                        const base = field.value ?? new Date();
+                        const combined = new Date(
+                          Date.UTC(
+                            base.getUTCFullYear(),
+                            base.getUTCMonth(),
+                            base.getUTCDate(),
+                            hh,
+                            mm
+                          )
+                        );
+                        field.onChange(combined);
+                      }}
                     />
-                  </PopoverContent>
-                </Popover>
+                    <FormDescription>Time in UTC</FormDescription>
+                  </div>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -133,44 +187,117 @@ export function QuestConfigStep() {
           <FormField
             control={control}
             name="endDate"
-            render={({ field }) => (
+            render={({
+              field,
+            }: {
+              field: { value?: Date; onChange: (v?: Date) => void };
+            }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>End Date (UTC) *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < watchedStartDate ||
-                        date >
-                          new Date(
-                            watchedStartDate.getTime() + 7 * 24 * 60 * 60 * 1000
+                <FormControl>
+                  <div className="space-y-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(d) => {
+                            if (!d) {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const hours = field.value?.getUTCHours() ?? 0;
+                            const minutes = field.value?.getUTCMinutes() ?? 0;
+                            const combined = new Date(
+                              Date.UTC(
+                                d.getFullYear(),
+                                d.getMonth(),
+                                d.getDate(),
+                                hours,
+                                minutes
+                              )
+                            );
+                            field.onChange(combined);
+                          }}
+                          disabled={(date) => {
+                            if (!watchedStartDate) return true;
+                            const startUtc = new Date(
+                              Date.UTC(
+                                watchedStartDate.getUTCFullYear(),
+                                watchedStartDate.getUTCMonth(),
+                                watchedStartDate.getUTCDate()
+                              )
+                            );
+                            const maxUtc = new Date(
+                              startUtc.getTime() + 7 * 24 * 60 * 60 * 1000
+                            );
+                            const dateUtc = new Date(
+                              Date.UTC(
+                                date.getFullYear(),
+                                date.getMonth(),
+                                date.getDate()
+                              )
+                            );
+                            return dateUtc < startUtc || dateUtc > maxUtc;
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      step={60}
+                      value={(() => {
+                        const v = field.value;
+                        const hh = String(v?.getUTCHours() ?? 0).padStart(
+                          2,
+                          "0"
+                        );
+                        const mm = String(v?.getUTCMinutes() ?? 0).padStart(
+                          2,
+                          "0"
+                        );
+                        return `${hh}:${mm}`;
+                      })()}
+                      onChange={(e) => {
+                        const time = e.target.value; // HH:MM
+                        const [hhStr, mmStr] = time.split(":");
+                        const hh = Number(hhStr || 0);
+                        const mm = Number(mmStr || 0);
+                        const base =
+                          field.value ?? watchedStartDate ?? new Date();
+                        const combined = new Date(
+                          Date.UTC(
+                            base.getUTCFullYear(),
+                            base.getUTCMonth(),
+                            base.getUTCDate(),
+                            hh,
+                            mm
                           )
-                      }
-                      initialFocus
+                        );
+                        field.onChange(combined);
+                      }}
                     />
-                  </PopoverContent>
-                </Popover>
+                    <FormDescription>
+                      Time in UTC (max 7 days from start)
+                    </FormDescription>
+                  </div>
+                </FormControl>
                 <FormDescription>
                   Maximum duration: 7 days from start date
                 </FormDescription>
@@ -182,7 +309,11 @@ export function QuestConfigStep() {
           <FormField
             control={control}
             name="maxParticipants"
-            render={({ field }) => (
+            render={({
+              field,
+            }: {
+              field: { value?: number; onChange: (v: number) => void };
+            }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
@@ -210,130 +341,6 @@ export function QuestConfigStep() {
         </CardContent>
       </Card>
 
-      {/* Quest Steps */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Quest Steps
-              </CardTitle>
-              <CardDescription>
-                Define the actions participants need to complete
-              </CardDescription>
-            </div>
-            <Button type="button" onClick={addStep} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Step
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {stepFields.map((field, index) => (
-            <Card key={field.id} className="relative">
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">Step {index + 1}</CardTitle>
-                  {stepFields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeStep(index)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={control}
-                  name={`questSteps.${index}.title`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Step Title *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Follow our X account"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={control}
-                    name={`questSteps.${index}.instruction`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Instruction *</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Detailed instructions for participants..."
-                            className="min-h-[80px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={control}
-                    name={`questSteps.${index}.completionCriteria`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Completion Criteria *</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="How to verify completion..."
-                            className="min-h-[80px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={control}
-                  name={`questSteps.${index}.xpReward`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>XP Reward</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={1000}
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Experience points awarded for completing this step
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Compulsory Tasks */}
       <Card>
         <CardHeader>
@@ -351,7 +358,11 @@ export function QuestConfigStep() {
             <FormField
               control={control}
               name="compulsoryTasks.0.enabled"
-              render={({ field }) => (
+              render={({
+                field,
+              }: {
+                field: { value?: boolean; onChange: (v: boolean) => void };
+              }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
@@ -379,14 +390,22 @@ export function QuestConfigStep() {
               <FormField
                 control={control}
                 name="compulsoryTasks.0.accountToFollow"
-                render={({ field }) => (
+                render={({
+                  field,
+                }: {
+                  field: { value?: string; onChange: (v: string) => void };
+                }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <AtSign className="h-4 w-4" />
                       Account to Follow
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="@username" {...field} />
+                      <Input
+                        placeholder="@username"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
                     </FormControl>
                     <FormDescription>
                       Enter the X username (with or without @)
@@ -405,7 +424,11 @@ export function QuestConfigStep() {
             <FormField
               control={control}
               name="compulsoryTasks.1.enabled"
-              render={({ field }) => (
+              render={({
+                field,
+              }: {
+                field: { value?: boolean; onChange: (v: boolean) => void };
+              }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
@@ -435,33 +458,12 @@ export function QuestConfigStep() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 border-l-2 border-muted">
                 <FormField
                   control={control}
-                  name="compulsoryTasks.1.minCharacters"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Minimum Characters</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={280}
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 150)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Minimum post length (default: 150)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={control}
                   name="compulsoryTasks.1.postLimit"
-                  render={({ field }) => (
+                  render={({
+                    field,
+                  }: {
+                    field: { value?: number; onChange: (v: number) => void };
+                  }) => (
                     <FormItem>
                       <FormLabel>Post Limit</FormLabel>
                       <FormControl>
@@ -471,7 +473,9 @@ export function QuestConfigStep() {
                           max={10}
                           {...field}
                           onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 1)
+                            field.onChange(
+                              Math.max(1, parseInt(e.target.value) || 1)
+                            )
                           }
                         />
                       </FormControl>
@@ -486,7 +490,14 @@ export function QuestConfigStep() {
                 <FormField
                   control={control}
                   name="compulsoryTasks.1.hashtags"
-                  render={({ field }) => (
+                  render={({
+                    field,
+                  }: {
+                    field: {
+                      value?: string[];
+                      onChange: (v: string[]) => void;
+                    };
+                  }) => (
                     <FormItem className="col-span-full">
                       <FormLabel className="flex items-center gap-2">
                         <Hash className="h-4 w-4" />
@@ -517,7 +528,14 @@ export function QuestConfigStep() {
                 <FormField
                   control={control}
                   name="compulsoryTasks.1.accountsToTag"
-                  render={({ field }) => (
+                  render={({
+                    field,
+                  }: {
+                    field: {
+                      value?: string[];
+                      onChange: (v: string[]) => void;
+                    };
+                  }) => (
                     <FormItem className="col-span-full">
                       <FormLabel className="flex items-center gap-2">
                         <AtSign className="h-4 w-4" />

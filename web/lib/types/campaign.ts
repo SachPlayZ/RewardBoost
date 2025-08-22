@@ -45,7 +45,6 @@ export const CompulsoryTaskSchema = z.object({
   postLimit: z.number().min(1).optional(),
   hashtags: z.array(z.string()).default([]),
   accountsToTag: z.array(z.string()).default([]),
-  minCharacters: z.number().min(1).default(150),
   // Custom task specific
   customTitle: z.string().optional(),
   customDescription: z.string().optional(),
@@ -67,9 +66,12 @@ export const CampaignFormSchema = z.object({
   title: z.string().min(1, 'Campaign title is required').max(100, 'Title too long'),
   description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Description too long'),
   
+  // Organization Info
+  organizationName: z.string().min(1, 'Organization name is required').max(100, 'Organization name too long'),
+  organizationLogo: z.string().url('Must be a valid URL').optional(),
+  
   // Quest Configuration
-  questImage: z.string().url('Must be a valid URL').optional(),
-  questSteps: z.array(QuestStepSchema).min(1, 'At least one quest step is required'),
+  questBanner: z.string().url('Must be a valid URL').optional(),
   startDate: z.date({
     required_error: 'Start date is required',
   }),

@@ -3,14 +3,13 @@
 export const TOKEN_ADDRESSES = {
   // SEI Testnet Token Addresses
   TESTNET: {
-    USDC: "0x3894085Ef7Ff0f0aeDf52E2A2704928d259f0C4C", // Example USDC address on SEI testnet
+    USDC: "0x4fCF1784B31630811181f670Aea7Aea7A7bEF803eaED", // USDC address on SEI testnet
     SEI: "0x0000000000000000000000000000000000000000", // Native SEI token (zero address)
-    WSEI: "0x57eE725BEeB991c70c53f9642f36755EC6eb2139", // Wrapped SEI
   },
   
-  // SEI Mainnet Token Addresses (Update with actual addresses when available)
+  // SEI Mainnet Token Addresses
   MAINNET: {
-    USDC: "0x...", // USDC address on SEI mainnet
+    USDC: "0x4fCF1784B31630811181f670Aea7Aea7A7bEF803eaED", // USDC address on SEI mainnet
     SEI: "0x0000000000000000000000000000000000000000", // Native SEI token
     WSEI: "0x...", // Wrapped SEI address
   }

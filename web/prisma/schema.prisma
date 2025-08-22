@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+}
+
+model Campaign {
+    id                  String   @id @default(cuid())
+    title               String
+    description         String
+    organizationName    String
+    organizationLogo    String?
+    questBanner         String?
+    startDate           DateTime
+    endDate             DateTime
+    maxParticipants     Int
+    currentParticipants Int      @default(0)
+    rewardAmount        Float
+    rewardType          String // 'USDC' or 'SEI'
+    distributionMethod  String // 'lucky_draw' or 'equal_distribution'
+    numberOfWinners     Int?
+    ownerWallet         String // Campaign creator's wallet address
+    isActive            Boolean  @default(true)
+    createdAt           DateTime @default(now())
+    updatedAt           DateTime @updatedAt
+
+    // Relations
+    tasks       Task[]
+    submissions Submission[]
+
+    @@map("campaigns")
+}
+
+model Task {
+    id                 String  @id @default(cuid())
+    campaignId         String
+    type               String // 'x_follow', 'x_post', 'custom'
+    title              String?
+    instruction        String?
+    completionCriteria String?
+    enabled            Boolean @default(false)
+
+    // Task-specific fields
+    accountToFollow   String? // For X follow tasks
+    postLimit         Int? // For X post tasks
+    hashtags          String[] // For X post tasks
+    accountsToTag     String[] // For X post tasks
+    customTitle       String? // For custom tasks
+    customDescription String? // For custom tasks
+    qpReward          Int      @default(10)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+    submissions Submission[]
+
+    @@map("tasks")
+}
+
+model Submission {
+    id             String  @id @default(cuid())
+    campaignId     String
+    taskId         String?
+    userWallet     String // Participant's wallet address
+    submissionType String // 'task_completion', 'full_quest'
+    status         String  @default("pending") // 'pending', 'approved', 'rejected', 'verified'
+
+    // Task completion data
+    taskData        Json? // Store task-specific completion data
+    twitterUsername String? // Twitter username for verification
+    twitterPostUrl  String? // URL of the Twitter post
+    proofImage      String? // URL to proof image if uploaded
+
+    // Verification data
+    verifiedAt    DateTime?
+    verifierNotes String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+    task     Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+    // Indexes for performance
+    @@unique([userWallet, campaignId, taskId])
+    @@map("submissions")
+}
+
+model TwitterAuth {
+    id                  String    @id @default(cuid())
+    userWallet          String    @unique
+    twitterId           String?   @unique
+    twitterUsername     String?
+    twitterName         String?
+    twitterProfileImage String?
+    accessToken         String?
+    refreshToken        String?
+    expiresAt           DateTime?
+    state               String? // OAuth state parameter
+    codeVerifier        String? // OAuth code verifier
+    createdAt           DateTime  @default(now())
+    updatedAt           DateTime  @updatedAt
+
+    // Relations
+    userProfile UserProfile?
+
+    @@map("twitter_auth")
+}
+
+model UserProfile {
+    id            String   @id @default(cuid())
+    walletAddress String   @unique
+    email         String?  @unique
+    twitterAuthId String?  @unique
+    displayName   String?
+    avatarUrl     String?
+    bio           String?
+    totalXP       Int      @default(0)
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    // Relations
+    twitterAuth TwitterAuth? @relation(fields: [twitterAuthId], references: [id])
+
+    @@map("user_profiles")
+}

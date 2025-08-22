@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm, useFieldArray, FormProvider } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CampaignFormSchema,
@@ -21,7 +22,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useQuestContract } from "@/hooks/use-quest-contract";
@@ -42,6 +42,7 @@ import { QuestConfigStep } from "@/components/campaign/QuestConfigStep";
 import { RewardsStep } from "@/components/campaign/RewardsStep";
 import { ReviewStep } from "@/components/campaign/ReviewStep";
 import { AIAssistantPanel } from "@/components/campaign/AIAssistantPanel";
+import { format } from "date-fns";
 
 const steps = [
   {
@@ -73,7 +74,9 @@ const steps = [
 export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showAIPanel, setShowAIPanel] = useState(false);
-  const { isConnected } = useAccount();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const { isConnected, address } = useAccount();
   const { createCampaign, isPending } = useQuestContract();
 
   const methods = useForm<CampaignFormData>({
@@ -81,16 +84,9 @@ export default function CreateCampaignPage() {
     defaultValues: {
       title: "",
       description: "",
-      questImage: "",
-      questSteps: [
-        {
-          id: "1",
-          title: "",
-          instruction: "",
-          completionCriteria: "",
-          xpReward: 10,
-        },
-      ],
+      organizationName: "",
+      organizationLogo: "",
+      questBanner: "",
       startDate: new Date(),
       endDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
       maxParticipants: 500,
@@ -98,17 +94,16 @@ export default function CreateCampaignPage() {
         {
           id: "1",
           type: TaskType.X_FOLLOW,
-          enabled: false,
+          enabled: true,
           accountToFollow: "",
         },
         {
           id: "2",
           type: TaskType.X_POST,
-          enabled: false,
+          enabled: true,
           postLimit: 1,
           hashtags: [],
           accountsToTag: [],
-          minCharacters: 150,
         },
       ],
       rewardConfig: {
@@ -130,7 +125,7 @@ export default function CreateCampaignPage() {
   const {
     handleSubmit,
     watch,
-    formState: { errors, isValid },
+    formState: { isValid },
   } = methods;
   const watchedValues = watch();
 
@@ -140,12 +135,72 @@ export default function CreateCampaignPage() {
       return;
     }
 
-    try {
-      // Here you would integrate with your contract
-      console.log("Creating campaign:", data);
+    if (!address) {
+      alert("Wallet address not found");
+      return;
+    }
 
-      // Create campaign with proper token handling
-      createCampaign({
+    try {
+      setIsSubmitting(true);
+
+      // Step 1: Create campaign in database via API
+      const campaignData = {
+        title: data.title,
+        description: data.description,
+        organizationName: data.organizationName,
+        organizationLogo: data.organizationLogo,
+        questBanner: data.questBanner,
+        startDate: data.startDate.toISOString(),
+        endDate: data.endDate.toISOString(),
+        maxParticipants: data.maxParticipants,
+        rewardAmount: data.rewardConfig.amount,
+        rewardType: data.rewardConfig.type,
+        distributionMethod:
+          data.rewardConfig.distributionMethod === DistributionMethod.LUCKY_DRAW
+            ? "lucky_draw"
+            : "equal_distribution",
+        numberOfWinners: data.rewardConfig.numberOfWinners,
+        ownerWallet: address,
+        tasks:
+          data.compulsoryTasks?.map((task) => ({
+            type:
+              task.type === TaskType.X_FOLLOW
+                ? "x_follow"
+                : task.type === TaskType.X_POST
+                ? "x_post"
+                : "custom",
+            title: task.customTitle || `${task.type} task`,
+            instruction:
+              task.customDescription || `Complete the ${task.type} task`,
+            completionCriteria: `Successfully complete the ${task.type} task`,
+            enabled: task.enabled,
+            accountToFollow: task.accountToFollow,
+            postLimit: task.postLimit,
+            hashtags: task.hashtags || [],
+            accountsToTag: task.accountsToTag || [],
+            customTitle: task.customTitle,
+            customDescription: task.customDescription,
+            qpReward: 10, // Default QP reward
+          })) || [],
+      };
+
+      // Create campaign in database
+      const apiResponse = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(campaignData),
+      });
+
+      if (!apiResponse.ok) {
+        throw new Error("Failed to create campaign in database");
+      }
+
+      const { campaign } = await apiResponse.json();
+
+      // Step 2: Create campaign on blockchain
+      await createCampaign({
         rewardTokenType: data.rewardConfig.type as "USDC" | "SEI",
         distributionMethod:
           data.rewardConfig.distributionMethod === DistributionMethod.LUCKY_DRAW
@@ -158,8 +213,20 @@ export default function CreateCampaignPage() {
         numberOfWinners:
           data.rewardConfig.numberOfWinners || data.maxParticipants,
       });
+
+      // Step 3: Update campaign with blockchain data (this would be done via event listener in a real implementation)
+      console.log("Campaign created successfully:", {
+        api: campaign,
+        blockchain: "pending",
+      });
+
+      // Redirect to campaign page
+      router.push(`/campaigns/${campaign.id}`);
     } catch (error) {
       console.error("Error creating campaign:", error);
+      alert("Failed to create campaign. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -336,6 +403,32 @@ export default function CreateCampaignPage() {
                   </div>
                   <div className="font-medium truncate">
                     {watchedValues.title || "Untitled Campaign"}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Start Date & Time (UTC)
+                  </div>
+                  <div className="font-medium">
+                    {watchedValues.startDate ? (
+                      <>{format(watchedValues.startDate, "PPP p")}</>
+                    ) : (
+                      "Not set"
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    End Date & Time (UTC)
+                  </div>
+                  <div className="font-medium">
+                    {watchedValues.endDate ? (
+                      <>{format(watchedValues.endDate, "PPP p")}</>
+                    ) : (
+                      "Not set"
+                    )}
                   </div>
                 </div>
 

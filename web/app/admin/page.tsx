@@ -107,7 +107,7 @@ const mockStats = {
 const mockUsers = [
   {
     address: "0x742d35Cc6635C0532925a3b8D7Fb8d22567b9E52",
-    totalXP: 2450,
+    totalQP: 2450,
     level: 12,
     completedQuests: 24,
     totalEarnings: 456.78,
@@ -474,7 +474,7 @@ export default function AdminDashboardPage() {
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead>Level</TableHead>
-                      <TableHead>Total XP</TableHead>
+                      <TableHead>Total QP</TableHead>
                       <TableHead>Completed Quests</TableHead>
                       <TableHead>Total Earnings</TableHead>
                       <TableHead>Status</TableHead>
@@ -505,7 +505,7 @@ export default function AdminDashboardPage() {
                         </TableCell>
                         <TableCell>
                           <div className="font-medium">
-                            {user.totalXP.toLocaleString()}
+                            {user.totalQP.toLocaleString()}
                           </div>
                         </TableCell>
                         <TableCell>

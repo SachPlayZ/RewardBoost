@@ -86,22 +86,40 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-lg">
+            <h3 className="text-xl font-semibold">
               {data.title || "Untitled Campaign"}
             </h3>
             <p className="text-muted-foreground mt-1">
               {data.description || "No description provided"}
             </p>
+
+            {data.organizationName && (
+              <div className="mt-3 flex items-center gap-3">
+                {data.organizationLogo && (
+                  <img
+                    src={data.organizationLogo}
+                    alt="Organization logo"
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+                <span className="text-sm font-medium text-muted-foreground">
+                  {data.organizationName}
+                </span>
+              </div>
+            )}
           </div>
 
-          {data.questImage && (
+          {data.questBanner && (
             <div>
               <div className="text-sm font-medium text-muted-foreground">
-                Quest Image
+                Quest Banner
               </div>
               <div className="mt-2 w-full h-32 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                 <img
-                  src={data.questImage}
+                  src={data.questBanner}
                   alt="Quest banner"
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -173,53 +191,13 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </CardContent>
       </Card>
 
-      {/* Quest Steps */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Quest Steps ({data.questSteps?.length || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {data.questSteps?.map((step, index) => (
-              <div key={step.id} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">Step {index + 1}</Badge>
-                      <h4 className="font-medium">{step.title}</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {step.instruction}
-                    </p>
-                    <div className="mt-2">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Completion Criteria:
-                      </div>
-                      <div className="text-sm">{step.completionCriteria}</div>
-                    </div>
-                  </div>
-                  <Badge variant="secondary">{step.xpReward} XP</Badge>
-                </div>
-              </div>
-            )) || (
-              <div className="text-center text-muted-foreground py-8">
-                No quest steps configured
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Compulsory Tasks */}
+      {/* Social Tasks */}
       {enabledTasks.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Twitter className="h-5 w-5" />
-              Compulsory Social Tasks ({enabledTasks.length})
+              Required Social Tasks ({enabledTasks.length})
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { usePublicClient } from "wagmi";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,123 +11,126 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { format } from "date-fns";
-import {
-  QuestRewardsContractABI,
-  QUEST_REWARDS_CONTRACT_ADDRESS,
-  Campaign,
-} from "@/lib/contracts/quest-rewards-contract";
-
-type CampaignListItem = Pick<
-  Campaign,
-  | "campaignId"
-  | "startTime"
-  | "endTime"
-  | "totalRewardAmount"
-  | "totalParticipants"
->;
+import { useUnifiedCampaigns } from "@/hooks/use-unified-data";
+import { TOKEN_METADATA } from "@/lib/contracts/tokens";
+import { getTokenAddress } from "@/lib/contracts/tokens";
 
 export default function CampaignsPage() {
-  const publicClient = usePublicClient();
-  const [campaigns, setCampaigns] = useState<CampaignListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { address } = useAccount();
+  const { apiCampaigns, loading, error } = useUnifiedCampaigns("active");
 
-  useEffect(() => {
-    async function fetchCampaigns() {
-      try {
-        if (!publicClient) return;
-        // Read CampaignCreated logs to infer campaignIds
-        const logs = await publicClient.getLogs({
-          address: QUEST_REWARDS_CONTRACT_ADDRESS,
-          event: {
-            type: "event",
-            name: "CampaignCreated",
-            inputs: [
-              { name: "campaignId", type: "uint256", indexed: true },
-              { name: "creator", type: "address", indexed: true },
-              { name: "rewardToken", type: "address", indexed: true },
-              { name: "distributionMethod", type: "uint8", indexed: false },
-              { name: "totalRewardAmount", type: "uint256", indexed: false },
-              { name: "startTime", type: "uint256", indexed: false },
-              { name: "endTime", type: "uint256", indexed: false },
-            ],
-            anonymous: false,
-          },
-          fromBlock: 0n,
-          toBlock: "latest",
-        } as any);
+  // Calculate time remaining for a campaign
+  const getTimeRemaining = (endDate: string) => {
+    const now = new Date().getTime();
+    const end = new Date(endDate).getTime();
+    const diff = end - now;
 
-        const ids = Array.from(
-          new Set(logs.map((l: any) => BigInt(l.args.campaignId)))
-        );
+    if (diff <= 0) return "Ended";
 
-        // Fetch each campaign details
-        const results = await Promise.all(
-          ids.map(async (id) => {
-            const data = await publicClient.readContract({
-              address: QUEST_REWARDS_CONTRACT_ADDRESS,
-              abi: QuestRewardsContractABI,
-              functionName: "getCampaign",
-              args: [id],
-            });
-            const c = data as unknown as Campaign;
-            return {
-              campaignId: c.campaignId,
-              startTime: c.startTime,
-              endTime: c.endTime,
-              totalRewardAmount: c.totalRewardAmount,
-              totalParticipants: c.totalParticipants,
-            } satisfies CampaignListItem;
-          })
-        );
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-        // Keep only ongoing campaigns (now between start and end)
-        const nowSec = BigInt(Math.floor(Date.now() / 1000));
-        const ongoing = results.filter(
-          (c) => c.startTime <= nowSec && c.endTime >= nowSec
-        );
-        // Sort by start time desc
-        ongoing.sort((a, b) => Number(b.startTime - a.startTime));
-        setCampaigns(ongoing);
-      } catch (e) {
-        console.error("Failed to fetch campaigns", e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchCampaigns();
-  }, [publicClient]);
+    if (days > 0) return `${days}d ${hours}h left`;
+    return `${hours}h left`;
+  };
+
+  // Format reward amount with token info
+  const formatReward = (amount: number, tokenType: string) => {
+    const tokenInfo = TOKEN_METADATA[tokenType] || TOKEN_METADATA.USDC;
+    const formattedAmount =
+      tokenType === "SEI" ? amount.toFixed(2) : amount.toFixed(2);
+    return `${formattedAmount} ${tokenInfo.symbol}`;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Campaigns</h1>
+        <h1 className="text-2xl font-semibold">Active Campaigns</h1>
         <Link href="/campaigns/create">
           <Button>Create Campaign</Button>
         </Link>
       </div>
 
+      {error && (
+        <div className="text-red-500 mb-4">
+          Error loading campaigns: {error}
+        </div>
+      )}
+
       {loading ? (
         <div className="text-muted-foreground">Loading campaigns...</div>
-      ) : campaigns.length === 0 ? (
-        <div className="text-muted-foreground">No campaigns yet.</div>
+      ) : apiCampaigns.length === 0 ? (
+        <div className="text-muted-foreground">No active campaigns yet.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campaigns.map((c) => (
-            <Link
-              key={c.campaignId.toString()}
-              href={`/campaigns/${c.campaignId.toString()}`}
-            >
+          {apiCampaigns.map((campaign) => (
+            <Link key={campaign.id} href={`/campaigns/${campaign.id}`}>
               <Card className="hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <CardTitle>Campaign #{c.campaignId.toString()}</CardTitle>
-                  <CardDescription>
-                    {format(new Date(Number(c.startTime) * 1000), "PP")} -{" "}
-                    {format(new Date(Number(c.endTime) * 1000), "PP")}
-                  </CardDescription>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg line-clamp-2">
+                        {campaign.title}
+                      </CardTitle>
+                      <CardDescription className="text-sm">
+                        by {campaign.organizationName}
+                      </CardDescription>
+                    </div>
+                    {campaign.organizationLogo && (
+                      <img
+                        src={campaign.organizationLogo}
+                        alt={campaign.organizationName}
+                        className="w-12 h-12 rounded-lg object-cover ml-3"
+                      />
+                    )}
+                  </div>
                 </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  <div>Total Reward: {c.totalRewardAmount.toString()}</div>
-                  <div>Participants: {c.totalParticipants.toString()}</div>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {campaign.description}
+                  </p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      <span className="font-medium text-primary">
+                        {formatReward(
+                          campaign.rewardAmount,
+                          campaign.rewardType
+                        )}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {campaign.currentParticipants}/{campaign.maxParticipants}{" "}
+                      joined
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      {campaign.distributionMethod === "lucky_draw"
+                        ? `${campaign.numberOfWinners} winners`
+                        : "All participants"}
+                    </span>
+                    <span className="text-orange-500 font-medium">
+                      {getTimeRemaining(campaign.endDate)}
+                    </span>
+                  </div>
+
+                  <div className="pt-2">
+                    <div className="bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${Math.min(
+                            (campaign.currentParticipants /
+                              campaign.maxParticipants) *
+                              100,
+                            100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </Link>
