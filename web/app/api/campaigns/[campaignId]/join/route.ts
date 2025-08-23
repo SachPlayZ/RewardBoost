@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const JoinQuestSchema = z.object({
   userWallet: z.string().min(1),
@@ -10,10 +8,10 @@ const JoinQuestSchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { campaignId: string } }
+  { params }: { params: Promise<{ campaignId: string }> }
 ) {
   try {
-    const { campaignId } = params;
+    const { campaignId } = await params;
     const body = await req.json();
     const { userWallet } = JoinQuestSchema.parse(body);
 
@@ -37,7 +35,7 @@ export async function POST(
       );
     }
 
-    if (!campaign.isActive) {
+    if (campaign.status !== 'active') {
       return NextResponse.json(
         { error: "Campaign is not active" },
         { status: 400 }
@@ -132,10 +130,10 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { campaignId: string } }
+  { params }: { params: Promise<{ campaignId: string }> }
 ) {
   try {
-    const { campaignId } = params;
+    const { campaignId } = await params;
     const { searchParams } = new URL(req.url);
     const userWallet = searchParams.get("userWallet");
 

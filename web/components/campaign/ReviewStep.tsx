@@ -1,12 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useFormContext } from "@/components/ui/form";
 import {
   CampaignFormData,
   DistributionMethod,
   TaskType,
   calculateTotalDeposit,
+  getDepositBreakdown,
+  calculatePlatformFee,
+  PLATFORM_FEE_PERCENTAGE,
 } from "@/lib/types/campaign";
+import { useQuestContract } from "@/hooks/use-quest-contract";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   Card,
   CardContent,
@@ -17,6 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import {
   CheckCircle,
@@ -31,6 +40,7 @@ import {
   DollarSign,
   Info,
   Clock,
+  Zap,
 } from "lucide-react";
 
 interface ReviewStepProps {
@@ -38,9 +48,138 @@ interface ReviewStepProps {
 }
 
 export function ReviewStep({ data }: ReviewStepProps) {
-  const totalDeposit = calculateTotalDeposit(data.rewardConfig?.amount || 0);
+  const [isCreating, setIsCreating] = useState(false);
+  const router = useRouter();
+  const { getValues } = useFormContext<CampaignFormData>();
+  const { isConnected, address } = useAccount();
+  const { createCampaign, isPending } = useQuestContract();
+
+  const totalDeposit = calculateTotalDeposit(
+    data.rewardConfig?.amount || 0,
+    data.rewardConfig?.type
+  );
+  const depositBreakdown = getDepositBreakdown(
+    data.rewardConfig?.amount || 0,
+    data.rewardConfig?.type
+  );
   const enabledTasks =
     data.compulsoryTasks?.filter((task) => task.enabled) || [];
+
+  const handleDepositAndCreate = async () => {
+    console.log("🚀 Deposit & Create button clicked!");
+
+    if (!isConnected) {
+      console.log("❌ Wallet not connected");
+      alert("Please connect your wallet first");
+      return;
+    }
+
+    if (!address) {
+      console.log("❌ Wallet address not found");
+      alert("Wallet address not found");
+      return;
+    }
+
+    console.log("✅ Wallet connected:", address);
+    console.log("📊 Form data:", data);
+
+    try {
+      setIsCreating(true);
+      console.log("🔄 Starting campaign creation process...");
+
+      // Get form data
+      console.log("📝 Getting form values...");
+      const formData = getValues();
+      console.log("📋 Form data retrieved:", formData);
+
+      // Step 1: Create campaign in database via API
+      console.log("📡 Creating campaign in database...");
+      const campaignData = {
+        title: formData.title,
+        description:
+          formData.description || "Join our quest campaign and earn rewards!",
+        organizationName: formData.organizationName,
+        organizationLogo: formData.organizationLogo,
+        questBanner: formData.questBanner,
+        startDate: formData.startDate.toISOString(),
+        endDate: formData.endDate.toISOString(),
+        maxParticipants: formData.maxParticipants,
+        rewardAmount: formData.rewardConfig.amount,
+        rewardType: formData.rewardConfig.type,
+        distributionMethod:
+          formData.rewardConfig.distributionMethod ===
+          DistributionMethod.LUCKY_DRAW
+            ? "lucky_draw"
+            : "equal_distribution",
+        numberOfWinners: formData.rewardConfig.numberOfWinners,
+        ownerWallet: address,
+        tasks:
+          formData.compulsoryTasks?.map((task) => ({
+            type:
+              task.type === TaskType.X_FOLLOW
+                ? "x_follow"
+                : task.type === TaskType.X_POST
+                ? "x_post"
+                : "custom",
+            title: task.customTitle || `${task.type} task`,
+            instruction:
+              task.customDescription || `Complete the ${task.type} task`,
+            completionCriteria: `Successfully complete the ${task.type} task`,
+            enabled: task.enabled,
+            accountToFollow: task.accountToFollow,
+            postLimit: task.postLimit,
+            hashtags: task.hashtags || [],
+            accountsToTag: task.accountsToTag || [],
+            customTitle: task.customTitle,
+            customDescription: task.customDescription,
+            qpReward:
+              task.type === TaskType.X_FOLLOW
+                ? 10 // Follow task: 10 QP
+                : task.type === TaskType.X_POST
+                ? 50 // Post task: 50 QP
+                : 10, // Custom tasks: 10 QP default
+          })) || [],
+      };
+
+      console.log("📤 Sending API request with data:", campaignData);
+      console.log("📝 Description being sent:", campaignData.description);
+      console.log(
+        "📏 Description length:",
+        campaignData.description?.length || 0
+      );
+
+      // Save campaign as draft in database
+      const apiResponse = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(campaignData),
+      });
+
+      console.log("📥 API response status:", apiResponse.status);
+
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        console.error("❌ API error:", errorText);
+        throw new Error(`Failed to save draft campaign: ${errorText}`);
+      }
+
+      const { campaignId } = await apiResponse.json();
+      console.log("✅ Draft campaign saved:", campaignId);
+
+      // Redirect to payment page instead of creating blockchain campaign
+      console.log("🔄 Redirecting to payment page...");
+      router.push(`/campaigns/${campaignId}/payment`);
+
+      return; // Exit here, redirect to payment page instead
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      alert("Failed to create campaign. Please try again.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const calculateDuration = () => {
     if (!data.startDate || !data.endDate) return "Not set";
@@ -229,7 +368,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
 
                   {task.type === TaskType.X_POST && (
                     <div className="space-y-2 text-sm">
-                      <div>Minimum characters: {task.minCharacters}</div>
                       <div>Post limit: {task.postLimit}</div>
                       {task.hashtags && task.hashtags.length > 0 && (
                         <div className="flex items-center gap-2">
@@ -319,18 +457,58 @@ export function ReviewStep({ data }: ReviewStepProps) {
         <Info className="h-4 w-4" />
         <AlertDescription>
           <div className="font-medium mb-2">
-            Total Deposit Required: ${totalDeposit}
+            Total Deposit Required: {depositBreakdown.displayText}
           </div>
           <div className="text-sm space-y-1">
-            <div>• Reward Pool: ${data.rewardConfig?.amount || 0}</div>
-            <div>• Platform Fee: $5.00</div>
+            <div>• Rewards: {depositBreakdown.rewards}</div>
+            <div>
+              • Platform Fee: {calculatePlatformFee(data.rewardConfig.amount)}{" "}
+              {data.rewardConfig.type} ({PLATFORM_FEE_PERCENTAGE}% of reward
+              amount)
+            </div>
             <div className="text-muted-foreground">
-              This amount will be transferred from your wallet to the smart
-              contract upon campaign deployment.
+              This amount will be transferred from your wallet in a single
+              transaction when you create the campaign.
             </div>
           </div>
         </AlertDescription>
       </Alert>
+
+      {/* Deposit and Create Campaign Button */}
+      <div className="flex flex-col items-center space-y-4">
+        {!isConnected ? (
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Connect your wallet to create and fund the campaign
+            </p>
+            <ConnectButton />
+          </div>
+        ) : (
+          <Button
+            onClick={handleDepositAndCreate}
+            disabled={isCreating || isPending}
+            className="w-full max-w-md gap-2"
+            size="lg"
+          >
+            {isCreating || isPending ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                Creating & Funding Campaign...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4" />
+                Deposit & Create Campaign
+              </>
+            )}
+          </Button>
+        )}
+
+        <p className="text-xs text-muted-foreground text-center max-w-md">
+          By clicking this button, you'll create the campaign and automatically
+          deposit the required funds in a single blockchain transaction.
+        </p>
+      </div>
 
       {/* Final Warning */}
       <Alert variant="destructive">

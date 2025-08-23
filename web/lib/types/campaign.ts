@@ -60,6 +60,22 @@ export const RewardConfigSchema = z.object({
   // Equal Distribution (numberOfWinners = total participants)
 });
 
+// Knowledge Base Schema
+export const KnowledgeBaseSchema = z.object({
+  enabled: z.boolean().default(false),
+  // PDF Upload option
+  pdfFileName: z.string().optional(),
+  pdfUrl: z.string().url().optional(),
+  knowledgeBaseId: z.string().optional(),
+  status: z.enum(['uploading', 'processing', 'ready', 'error']).optional(),
+  errorMessage: z.string().optional(),
+  // Manual text input option
+  manualText: z.string().optional(),
+  inputMethod: z.enum(['pdf', 'text']).default('pdf'),
+  // Processing method
+  provider: z.enum(['rivalz', 'groq']).default('rivalz'),
+});
+
 // Main Campaign Schema
 export const CampaignFormSchema = z.object({
   // Basic Campaign Info
@@ -81,6 +97,9 @@ export const CampaignFormSchema = z.object({
   maxParticipants: z.number().min(1, 'Must allow at least 1 participant').max(10000, 'Too many participants'),
   compulsoryTasks: z.array(CompulsoryTaskSchema).default([]),
   
+  // Knowledge Base for AI Tweet Generation
+  knowledgeBase: KnowledgeBaseSchema.optional(),
+  
   // Rewards
   rewardConfig: RewardConfigSchema,
   
@@ -92,20 +111,6 @@ export const CampaignFormSchema = z.object({
     generateContent: z.boolean().default(false),
     customContent: z.string().optional(),
   }).optional(),
-}).refine((data) => {
-  // End date must be after start date
-  return data.endDate > data.startDate;
-}, {
-  message: "End date must be after start date",
-  path: ["endDate"],
-}).refine((data) => {
-  // Max duration check (7 days)
-  const diffTime = data.endDate.getTime() - data.startDate.getTime();
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
-  return diffDays <= 7;
-}, {
-  message: "Campaign duration cannot exceed 7 days",
-  path: ["endDate"],
 }).refine((data) => {
   // For lucky draw, numberOfWinners is required
   if (data.rewardConfig.distributionMethod === DistributionMethod.LUCKY_DRAW) {
@@ -121,12 +126,15 @@ export type CampaignFormData = z.infer<typeof CampaignFormSchema>;
 export type QuestStep = z.infer<typeof QuestStepSchema>;
 export type CompulsoryTask = z.infer<typeof CompulsoryTaskSchema>;
 export type RewardConfig = z.infer<typeof RewardConfigSchema>;
+export type KnowledgeBase = z.infer<typeof KnowledgeBaseSchema>;
 
-// Platform Fee Configuration (display-only, configurable later)
-export const PLATFORM_FEE = {
-  FLAT_FEE: 5, // $5 USD
-  PERCENTAGE: 0, // 0% for now
-};
+// Platform Fee Configuration - 5% of reward amount
+export const PLATFORM_FEE_PERCENTAGE = 5; // 5% platform fee
+
+// Helper function to calculate platform fee dynamically
+export function calculatePlatformFee(rewardAmount: number): number {
+  return (rewardAmount * PLATFORM_FEE_PERCENTAGE) / 100;
+}
 
 // XP Configuration
 export const XP_REWARDS = {
@@ -137,8 +145,22 @@ export const XP_REWARDS = {
 };
 
 // Helper function to calculate total deposit required
-export function calculateTotalDeposit(rewardAmount: number): number {
-  return rewardAmount + PLATFORM_FEE.FLAT_FEE;
+export function calculateTotalDeposit(rewardAmount: number, rewardType: RewardType): number {
+  // Platform fee is 5% of the reward amount in the same token
+  const platformFee = calculatePlatformFee(rewardAmount);
+  return rewardAmount + platformFee;
+}
+
+// Helper function to get deposit breakdown for display
+export function getDepositBreakdown(rewardAmount: number, rewardType: RewardType) {
+  const platformFee = calculatePlatformFee(rewardAmount);
+
+  return {
+    rewards: `${rewardAmount} ${rewardType}`,
+    platformFee: `${platformFee} ${rewardType}`,
+    total: `${rewardAmount + platformFee} ${rewardType}`,
+    displayText: `${rewardAmount} ${rewardType} + ${platformFee} ${rewardType} (Platform Fee)`
+  };
 }
 
 // Helper function to calculate XP rewards

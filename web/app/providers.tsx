@@ -8,7 +8,6 @@ import { RainbowKitProvider, Theme } from "@rainbow-me/rainbowkit";
 import { getConfig } from "./config";
 import { seiTestnet } from "viem/chains";
 import "@sei-js/sei-global-wallet/eip6963";
-
 const customTheme: Theme = {
   blurs: {
     modalOverlay: "blur(8px)",

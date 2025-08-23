@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext } from "@/components/ui/form";
 import {
   CampaignFormData,
   RewardType,
   DistributionMethod,
   calculateTotalDeposit,
+  getDepositBreakdown,
+  calculatePlatformFee,
+  PLATFORM_FEE_PERCENTAGE,
 } from "@/lib/types/campaign";
 import {
   FormControl,
@@ -53,7 +56,14 @@ export function RewardsStep() {
   const watchedRewardConfig = watch("rewardConfig");
   const watchedMaxParticipants = watch("maxParticipants");
 
-  const totalDeposit = calculateTotalDeposit(watchedRewardConfig?.amount || 0);
+  const totalDeposit = calculateTotalDeposit(
+    watchedRewardConfig?.amount || 0,
+    watchedRewardConfig?.type
+  );
+  const depositBreakdown = getDepositBreakdown(
+    watchedRewardConfig?.amount || 0,
+    watchedRewardConfig?.type
+  );
 
   // Calculate rewards per winner based on distribution method
   const calculateRewardPerWinner = () => {
@@ -141,16 +151,22 @@ export function RewardsStep() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value={RewardType.SEI}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-red-500 rounded-full" />
+                        SEI (Native Token)
+                        <Badge variant="outline" className="text-xs ml-2">
+                          Recommended
+                        </Badge>
+                      </div>
+                    </SelectItem>
                     <SelectItem value={RewardType.USDC}>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-blue-500 rounded-full" />
                         USDC
-                      </div>
-                    </SelectItem>
-                    <SelectItem value={RewardType.SEI}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-red-500 rounded-full" />
-                        SEI
+                        <Badge variant="outline" className="text-xs ml-2">
+                          Also Available
+                        </Badge>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -376,14 +392,19 @@ export function RewardsStep() {
             <Info className="h-4 w-4" />
             <AlertDescription>
               <div className="font-medium mb-2">
-                Total Deposit Required: ${totalDeposit}
+                Total Deposit Required: {depositBreakdown.displayText}
               </div>
               <div className="text-sm space-y-1">
-                <div>• Reward Pool: ${watchedRewardConfig?.amount || 0}</div>
-                <div>• Platform Fee: $5.00 (flat fee)</div>
+                <div>• Rewards: {depositBreakdown.rewards}</div>
+                <div>
+                  • Platform Fee:{" "}
+                  {calculatePlatformFee(watchedRewardConfig?.amount || 0)}{" "}
+                  {watchedRewardConfig?.type || RewardType.USDC} (
+                  {PLATFORM_FEE_PERCENTAGE}% of reward amount)
+                </div>
                 <div className="text-muted-foreground">
-                  This amount will be deducted from your wallet when creating
-                  the campaign.
+                  This amount will be transferred from your wallet in a single
+                  transaction when you create and fund the campaign.
                 </div>
               </div>
             </AlertDescription>
@@ -404,7 +425,7 @@ export function RewardsStep() {
               </Alert>
             )}
 
-          {parseFloat(calculateRewardPerWinner()) < 1 && (
+          {parseFloat(calculateRewardPerWinner().toString()) < 1 && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>

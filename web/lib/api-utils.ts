@@ -75,7 +75,7 @@ export function formatCampaignData(campaign: any) {
     distributionMethod: campaign.distributionMethod,
     numberOfWinners: campaign.numberOfWinners,
     ownerWallet: campaign.ownerWallet,
-    isActive: campaign.isActive,
+    status: campaign.status,
     createdAt: campaign.createdAt,
   };
 }

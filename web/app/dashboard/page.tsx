@@ -20,11 +20,18 @@ import { useQuestContract } from "@/hooks/use-quest-contract";
 import {
   useUnifiedUserStats,
   useUnifiedCampaigns,
+  useValidatedCampaigns,
   useUnifiedLeaderboard,
   useUnifiedJoinCampaign,
+  useCampaignParticipation,
 } from "@/hooks/use-unified-data";
+import { TaskSubmissionDialog } from "@/components/campaign/TaskSubmissionDialog";
+
+import { CampaignActionButton } from "@/components/campaign/CampaignActionButton";
 import { DistributionMethod } from "@/lib/types/campaign";
+import { APICampaign } from "@/hooks/use-unified-data";
 import { StreakCard, MonthlyRaffleCard } from "@/components/streaks/StreakCard";
+
 import {
   Trophy,
   Zap,
@@ -50,6 +57,10 @@ import {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("available");
+  const [selectedCampaignForTasks, setSelectedCampaignForTasks] =
+    useState<APICampaign | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+
   const { isConnected, address } = useAccount();
   const {
     joinCampaign,
@@ -60,7 +71,7 @@ export default function DashboardPage() {
   // Get real data from unified hooks
   const userStats = useUnifiedUserStats();
   const { apiCampaigns: availableCampaigns, loading: campaignsLoading } =
-    useUnifiedCampaigns("all");
+    useValidatedCampaigns("all");
   const { leaderboard, loading: leaderboardLoading } = useUnifiedLeaderboard(
     10,
     0
@@ -156,231 +167,422 @@ export default function DashboardPage() {
                     No available campaigns at the moment.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {availableCampaigns
-                      .filter((c) => c.currentParticipants < c.maxParticipants)
-                      .map((campaign) => (
-                        <Card key={campaign.id} className="overflow-hidden">
-                          <div className="h-48 bg-gradient-to-br from-purple-500 to-pink-500 relative">
-                            <div className="absolute inset-0 bg-black/20" />
-
-                            <div className="absolute top-4 right-4">
-                              <Badge className="bg-green-500">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {getTimeRemaining(new Date(campaign.endDate))}
-                              </Badge>
-                            </div>
-                            <div className="absolute bottom-4 left-4 text-white">
-                              <h3 className="font-bold text-xl mb-1">
-                                {campaign.title}
-                              </h3>
-                              <p className="text-sm opacity-90">
-                                {campaign.description}
-                              </p>
-                            </div>
-                            <div className="absolute -bottom-10 right-4">
-                              <Avatar className="h-20 w-20 border-3 border-white shadow-lg">
-                                <AvatarImage
-                                  src={
-                                    campaign.organizationLogo ||
-                                    "/placeholder-logo.png"
-                                  }
-                                />
-                                <AvatarFallback className="text-white bg-black/50 text-lg">
-                                  {campaign.organizationName?.charAt(0) || "O"}
-                                </AvatarFallback>
-                              </Avatar>
-                            </div>
-                          </div>
-
-                          <CardContent className="p-6">
-                            <div className="space-y-4">
-                              <div className="text-sm text-muted-foreground mb-2">
-                                by {campaign.organizationName}
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Gift className="h-4 w-4 text-primary" />
-                                  <span className="font-medium">
-                                    {campaign.rewardAmount}{" "}
-                                    {campaign.rewardType}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Zap className="h-4 w-4 text-yellow-500" />
-                                  <span className="font-medium">
-                                    {campaign.tasks?.[0]?.qpReward || 10} QP
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <div>
-                                  {campaign.distributionMethod === "lucky_draw"
-                                    ? `${(
-                                        campaign.rewardAmount /
-                                        (campaign.numberOfWinners || 1)
-                                      ).toFixed(2)} ${
-                                        campaign.rewardType
-                                      } per winner (${
-                                        campaign.numberOfWinners
-                                      } winners)`
-                                    : `${(
-                                        campaign.rewardAmount /
-                                        Math.max(
-                                          campaign.currentParticipants,
-                                          1
-                                        )
-                                      ).toFixed(2)} ${
-                                        campaign.rewardType
-                                      } per winner (all participants)`}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                  <Shield className="h-3 w-3" />
-                                  <span>Platform Guarantee: $0.02 USDC</span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-1">
-                                  <Users className="h-3 w-3" />
-                                  {campaign.currentParticipants}/
-                                  {campaign.maxParticipants} joined
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Trophy className="h-3 w-3" />
-                                  {campaign.distributionMethod === "lucky_draw"
-                                    ? `${campaign.numberOfWinners} winners`
-                                    : "All participants"}
-                                </div>
-                              </div>
-
-                              <Progress
-                                value={
-                                  (campaign.currentParticipants /
-                                    campaign.maxParticipants) *
-                                  100
-                                }
-                                className="h-2"
-                              />
-
-                              <Button
-                                onClick={() => handleJoinCampaign(campaign.id)}
-                                disabled={isJoining}
-                                className="w-full gap-2"
+                  <div className="space-y-8">
+                    {/* Funded/Active Campaigns */}
+                    {availableCampaigns.some(
+                      (c) =>
+                        c.currentParticipants < c.maxParticipants &&
+                        c.blockchainCampaignId !== null &&
+                        c.blockchainCampaignId !== undefined
+                    ) && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">
+                          Available Campaigns
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {availableCampaigns
+                            .filter(
+                              (c) =>
+                                c.currentParticipants < c.maxParticipants &&
+                                c.blockchainCampaignId !== null &&
+                                c.blockchainCampaignId !== undefined
+                            )
+                            .map((campaign) => (
+                              <Card
+                                key={campaign.id}
+                                className="overflow-hidden"
                               >
-                                <PlayCircle className="h-4 w-4" />
-                                {isJoining ? "Joining..." : "Join Quest"}
-                              </Button>
-                              {joinError && (
-                                <div className="text-sm text-red-500 mt-2">
-                                  {joinError}
+                                <div className="h-48 bg-gradient-to-br from-purple-500 to-pink-500 relative">
+                                  <div className="absolute inset-0 bg-black/20" />
+
+                                  <div className="absolute top-4 right-4">
+                                    <Badge className="bg-green-500">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {getTimeRemaining(
+                                        new Date(campaign.endDate)
+                                      )}
+                                    </Badge>
+                                  </div>
+                                  <div className="absolute bottom-4 left-4 text-white">
+                                    <h3 className="font-bold text-xl mb-1">
+                                      {campaign.title}
+                                    </h3>
+                                    <p className="text-sm opacity-90">
+                                      {campaign.description}
+                                    </p>
+                                  </div>
+                                  <div className="absolute -bottom-10 right-4">
+                                    <Avatar className="h-20 w-20 border-3 border-white shadow-lg">
+                                      <AvatarImage
+                                        src={
+                                          campaign.organizationLogo ||
+                                          "/placeholder-logo.png"
+                                        }
+                                      />
+                                      <AvatarFallback className="text-white bg-black/50 text-lg">
+                                        {campaign.organizationName?.charAt(0) ||
+                                          "O"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+
+                                <CardContent className="p-6">
+                                  <div className="space-y-4">
+                                    <div className="text-sm text-muted-foreground mb-2">
+                                      by {campaign.organizationName}
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <Gift className="h-4 w-4 text-primary" />
+                                        <span className="font-medium">
+                                          {campaign.rewardAmount}{" "}
+                                          {campaign.rewardType}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Zap className="h-4 w-4 text-yellow-500" />
+                                        <span className="font-medium">
+                                          {campaign.tasks?.[0]?.qpReward || 10}{" "}
+                                          QP
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                      <div>
+                                        {campaign.distributionMethod ===
+                                        "lucky_draw"
+                                          ? `${(
+                                              campaign.rewardAmount /
+                                              (campaign.numberOfWinners || 1)
+                                            ).toFixed(2)} ${
+                                              campaign.rewardType
+                                            } per winner (${
+                                              campaign.numberOfWinners
+                                            } winners)`
+                                          : `${(
+                                              campaign.rewardAmount /
+                                              Math.max(
+                                                campaign.currentParticipants,
+                                                1
+                                              )
+                                            ).toFixed(2)} ${
+                                              campaign.rewardType
+                                            } per winner (all participants)`}
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                      <div className="flex items-center gap-2">
+                                        <Shield className="h-3 w-3" />
+                                        <span>
+                                          Platform Guarantee: $0.02 USDC
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-sm">
+                                      <div className="flex items-center gap-1">
+                                        <Users className="h-3 w-3" />
+                                        {campaign.currentParticipants}/
+                                        {campaign.maxParticipants} joined
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Trophy className="h-3 w-3" />
+                                        {campaign.distributionMethod ===
+                                        "lucky_draw"
+                                          ? `${campaign.numberOfWinners} winners`
+                                          : "All participants"}
+                                      </div>
+                                    </div>
+
+                                    <Progress
+                                      value={
+                                        (campaign.currentParticipants /
+                                          campaign.maxParticipants) *
+                                        100
+                                      }
+                                      className="h-2"
+                                    />
+
+                                    <div className="space-y-2">
+                                      {/* Campaign action button based on participation status */}
+                                      {address && (
+                                        <CampaignActionButton
+                                          campaign={campaign}
+                                          address={address}
+                                          isJoining={isJoining}
+                                          onJoinCampaign={handleJoinCampaign}
+                                          onOpenTaskDialog={() => {
+                                            setSelectedCampaignForTasks(
+                                              campaign
+                                            );
+                                            setTaskDialogOpen(true);
+                                          }}
+                                          onOpenReviewDialog={() => {
+                                            // No longer needed - owners redirect to campaign page
+                                          }}
+                                        />
+                                      )}
+
+                                      {/* Campaign owner logic is now handled in CampaignActionButton */}
+                                    </div>
+                                    {joinError && (
+                                      <div className="text-sm text-red-500 mt-2">
+                                        {joinError}
+                                      </div>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Unfunded/Pending Campaigns */}
+                    {availableCampaigns.some(
+                      (c) =>
+                        c.currentParticipants < c.maxParticipants &&
+                        (c.blockchainCampaignId === null ||
+                          c.blockchainCampaignId === undefined)
+                    ) && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">
+                          Pending Campaigns (Not Yet Funded)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {availableCampaigns
+                            .filter(
+                              (c) =>
+                                c.currentParticipants < c.maxParticipants &&
+                                (c.blockchainCampaignId === null ||
+                                  c.blockchainCampaignId === undefined)
+                            )
+                            .map((campaign) => (
+                              <Card
+                                key={campaign.id}
+                                className="overflow-hidden opacity-60"
+                              >
+                                <div className="h-48 bg-gradient-to-br from-gray-500 to-gray-600 relative">
+                                  <div className="absolute inset-0 bg-black/30" />
+
+                                  <div className="absolute top-4 right-4">
+                                    <Badge className="bg-yellow-500 text-yellow-900">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Pending Funding
+                                    </Badge>
+                                  </div>
+                                  <div className="absolute bottom-4 left-4 text-white">
+                                    <h3 className="font-bold text-xl mb-1">
+                                      {campaign.title}
+                                    </h3>
+                                    <p className="text-sm opacity-90">
+                                      {campaign.description}
+                                    </p>
+                                  </div>
+                                  <div className="absolute -bottom-10 right-4">
+                                    <Avatar className="h-20 w-20 border-3 border-white shadow-lg">
+                                      <AvatarImage
+                                        src={
+                                          campaign.organizationLogo ||
+                                          "/placeholder-logo.png"
+                                        }
+                                      />
+                                      <AvatarFallback className="text-white bg-black/50 text-lg">
+                                        {campaign.organizationName?.charAt(0) ||
+                                          "O"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </div>
+                                </div>
+
+                                <CardContent className="p-6">
+                                  <div className="space-y-4">
+                                    <div className="text-sm text-muted-foreground mb-2">
+                                      by {campaign.organizationName}
+                                    </div>
+
+                                    <Alert>
+                                      <Clock className="h-4 w-4" />
+                                      <AlertDescription>
+                                        This campaign is waiting for funding on
+                                        the blockchain. You can join once it's
+                                        funded.
+                                      </AlertDescription>
+                                    </Alert>
+
+                                    <div className="flex items-center justify-between text-sm">
+                                      <div className="flex items-center gap-1">
+                                        <Users className="h-3 w-3" />
+                                        {campaign.currentParticipants}/
+                                        {campaign.maxParticipants} joined
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="active" className="space-y-6">
-                <div className="text-muted-foreground">
-                  Active campaigns feature coming soon. This will show campaigns
-                  you've joined and are currently participating in.
-                </div>
-                {/* TODO: Implement active campaigns based on user's participation */}
-                {availableCampaigns
-                  .filter((c) => c.currentParticipants > 0)
-                  .slice(0, 2)
-                  .map((campaign) => (
-                    <Card key={campaign.id}>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="h-12 w-12 border-2 border-border">
-                              <AvatarImage
-                                src={
-                                  campaign.organizationLogo ||
-                                  "/placeholder-logo.png"
-                                }
-                              />
-                              <AvatarFallback>
-                                {campaign.organizationName?.charAt(0) || "O"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="flex items-center gap-2">
-                                {campaign.title}
-                                <Badge variant="secondary">Active</Badge>
-                              </CardTitle>
-                              <CardDescription>
-                                {campaign.description}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-muted-foreground">
-                              Tasks
-                            </div>
-                            <div className="text-2xl font-bold">
-                              {campaign.tasks?.length || 0}
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="space-y-3">
-                            {campaign.tasks?.map((task) => (
-                              <div
-                                key={task.id}
-                                className="flex items-center justify-between p-3 border rounded-lg"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-5 h-5 border-2 border-muted-foreground rounded-full" />
-                                  <div>
-                                    <div className="font-medium">
-                                      {task.title ||
-                                        task.customTitle ||
-                                        `Task ${task.id}`}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {task.type === "x_follow"
-                                        ? "Social Follow Task"
-                                        : task.type === "x_post"
-                                        ? "Content Creation"
-                                        : "Custom Task"}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline">
-                                    {task.qpReward} QP
+                {availableCampaigns.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">
+                      No active quests yet
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      Join a campaign from the "Available Quests" tab to start
+                      participating!
+                    </p>
+                    <Button onClick={() => setActiveTab("available")}>
+                      Browse Available Quests
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Your Active Quests
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {availableCampaigns
+                          .filter((c) => c.currentParticipants > 0)
+                          .map((campaign) => (
+                            <Card key={campaign.id} className="overflow-hidden">
+                              <div className="h-32 bg-gradient-to-br from-blue-500 to-purple-500 relative">
+                                <div className="absolute inset-0 bg-black/20" />
+                                <div className="absolute top-3 right-3">
+                                  <Badge className="bg-green-500">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {getTimeRemaining(
+                                      new Date(campaign.endDate)
+                                    )}
                                   </Badge>
-                                  <Button size="sm" variant="outline">
-                                    View Task
-                                  </Button>
+                                </div>
+                                <div className="absolute bottom-3 left-3 text-white">
+                                  <h4 className="font-bold text-lg mb-1">
+                                    {campaign.title}
+                                  </h4>
+                                  <p className="text-sm opacity-90">
+                                    {campaign.organizationName}
+                                  </p>
                                 </div>
                               </div>
-                            ))}
-                          </div>
 
-                          <Alert>
-                            <Clock className="h-4 w-4" />
-                            <AlertDescription>
-                              Time remaining:{" "}
-                              {getTimeRemaining(new Date(campaign.endDate))}
-                            </AlertDescription>
-                          </Alert>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                              <CardContent className="p-6">
+                                <div className="space-y-4">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                      <Target className="h-4 w-4 text-muted-foreground" />
+                                      <span>
+                                        {campaign.tasks?.filter(
+                                          (t) => t.enabled
+                                        ).length || 0}{" "}
+                                        Active Tasks
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Gift className="h-4 w-4 text-muted-foreground" />
+                                      <span>
+                                        {campaign.rewardAmount}{" "}
+                                        {campaign.rewardType}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="text-sm font-medium">
+                                      Progress
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                        <div
+                                          className="bg-primary h-2 rounded-full"
+                                          style={{
+                                            width: `${
+                                              (campaign.tasks?.filter(
+                                                (t) => t.enabled
+                                              ).length || 0) > 0
+                                                ? 50
+                                                : 0
+                                            }%`,
+                                          }}
+                                        />
+                                      </div>
+                                      <span className="text-xs text-muted-foreground">
+                                        In Progress
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {campaign.tasks
+                                      ?.filter((t) => t.enabled)
+                                      .slice(0, 2)
+                                      .map((task) => (
+                                        <div
+                                          key={task.id}
+                                          className="flex items-center justify-between p-2 bg-muted rounded text-sm"
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-muted-foreground rounded-full" />
+                                            <span className="font-medium">
+                                              {task.title ||
+                                                task.customTitle ||
+                                                `${task.type.replace(
+                                                  "_",
+                                                  " "
+                                                )} Task`}
+                                            </span>
+                                          </div>
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs"
+                                          >
+                                            {task.qpReward} QP
+                                          </Badge>
+                                        </div>
+                                      ))}
+
+                                    {(campaign.tasks?.filter((t) => t.enabled)
+                                      .length || 0) > 2 && (
+                                      <div className="text-xs text-muted-foreground text-center">
+                                        +
+                                        {(campaign.tasks?.filter(
+                                          (t) => t.enabled
+                                        ).length || 0) - 2}{" "}
+                                        more tasks
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedCampaignForTasks(campaign);
+                                      setTaskDialogOpen(true);
+                                    }}
+                                    className="w-full"
+                                    size="lg"
+                                  >
+                                    <PlayCircle className="w-4 h-4 mr-2" />
+                                    Continue Quest
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="completed">
@@ -557,6 +759,20 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Task Submission Dialog */}
+      {selectedCampaignForTasks && (
+        <TaskSubmissionDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          campaignId={selectedCampaignForTasks.id}
+          apiCampaign={selectedCampaignForTasks}
+          onSubmissionSuccess={() => {
+            // Force re-render to update button status
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const CreateCampaignSchema = z.object({
   title: z.string().min(1),
-  description: z.string().min(10),
+  description: z.string().min(1),
   organizationName: z.string().min(1),
-  organizationLogo: z.string().url().optional(),
-  questBanner: z.string().url().optional(),
+  organizationLogo: z.string().optional(),
+  questBanner: z.string().optional(),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
   maxParticipants: z.number().min(1).max(10000),
@@ -32,33 +30,29 @@ const CreateCampaignSchema = z.object({
     customDescription: z.string().optional(),
     qpReward: z.number().min(0).default(10),
   })).default([]),
+  knowledgeBase: z.object({
+    enabled: z.boolean().default(false),
+    pdfFileName: z.string().optional(),
+    pdfUrl: z.string().optional(),
+    knowledgeBaseId: z.string().optional(),
+    status: z.enum(['uploading', 'processing', 'ready', 'error']).optional(),
+    errorMessage: z.string().optional(),
+    manualText: z.string().optional(),
+  }).optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log("🔍 API received data:", body);
+    console.log("📝 Description received:", body.description);
+    console.log("🏢 Organization logo:", body.organizationLogo);
+    console.log("🎨 Quest banner:", body.questBanner);
     const validatedData = CreateCampaignSchema.parse(body);
 
-    // Validate dates
+    // Parse dates
     const startDate = new Date(validatedData.startDate);
     const endDate = new Date(validatedData.endDate);
-
-    if (endDate <= startDate) {
-      return NextResponse.json(
-        { error: "End date must be after start date" },
-        { status: 400 }
-      );
-    }
-
-    // Check campaign duration (max 7 days)
-    const diffTime = endDate.getTime() - startDate.getTime();
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    if (diffDays > 7) {
-      return NextResponse.json(
-        { error: "Campaign duration cannot exceed 7 days" },
-        { status: 400 }
-      );
-    }
 
     // Validate lucky draw configuration
     if (validatedData.distributionMethod === "lucky_draw" && !validatedData.numberOfWinners) {
@@ -84,6 +78,15 @@ export async function POST(req: NextRequest) {
         distributionMethod: validatedData.distributionMethod,
         numberOfWinners: validatedData.numberOfWinners,
         ownerWallet: validatedData.ownerWallet.toLowerCase(),
+        funded: false, // Campaigns start as unfunded
+        // Knowledge base fields
+        knowledgeBaseEnabled: validatedData.knowledgeBase?.enabled || false,
+        knowledgeBasePdfFileName: validatedData.knowledgeBase?.pdfFileName,
+        knowledgeBasePdfUrl: validatedData.knowledgeBase?.pdfUrl,
+        knowledgeBaseId: validatedData.knowledgeBase?.knowledgeBaseId,
+        knowledgeBaseStatus: validatedData.knowledgeBase?.status,
+        knowledgeBaseErrorMessage: validatedData.knowledgeBase?.errorMessage,
+        knowledgeBaseManualText: validatedData.knowledgeBase?.manualText,
         tasks: {
           create: validatedData.tasks.map(task => ({
             type: task.type,
@@ -108,14 +111,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      campaign: {
-        id: campaign.id,
-        title: campaign.title,
-        description: campaign.description,
-        startDate: campaign.startDate,
-        endDate: campaign.endDate,
-        tasks: campaign.tasks,
-      },
+      campaignId: campaign.id,
+      message: "Draft campaign saved successfully"
     });
 
   } catch (error) {
@@ -135,6 +132,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
+
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -144,20 +143,60 @@ export async function GET(req: NextRequest) {
     let whereClause: any = {};
 
     if (ownerWallet) {
-      whereClause.ownerWallet = ownerWallet.toLowerCase();
+      const lowerOwnerWallet = ownerWallet.toLowerCase();
+
+      if (status === "all") {
+        // For "all" status with connected wallet, show:
+        // 1. Campaigns owned by the user, OR
+        // 2. Funded campaigns from other users (that they can join)
+        whereClause.OR = [
+          { ownerWallet: lowerOwnerWallet }, // User's own campaigns
+          { funded: true } // Funded campaigns they can join
+        ];
+      } else {
+        // For specific status (active, completed), show only user's campaigns
+        whereClause.ownerWallet = lowerOwnerWallet;
+      }
     }
+    // Note: When no ownerWallet is specified, we show ALL campaigns
+    // This allows users to see all campaigns even when not connected
 
     if (status === "active") {
-      whereClause.isActive = true;
-      whereClause.endDate = {
-        gte: new Date(),
-      };
+      if (whereClause.OR) {
+        // For "all" status with OR condition, apply status filter to both parts
+        whereClause.OR = whereClause.OR.map((condition: any) => ({
+          ...condition,
+          status: "active",
+          endDate: { gte: new Date() }
+        }));
+      } else {
+        whereClause.status = "active";
+        whereClause.endDate = {
+          gte: new Date(),
+        };
+      }
     } else if (status === "completed") {
-      whereClause.OR = [
-        { isActive: false },
+      const completedConditions = [
+        { status: "ended" },
+        { status: "cancelled" },
         { endDate: { lt: new Date() } },
       ];
+
+      if (whereClause.OR) {
+        // For "all" status with OR condition, combine with completed conditions
+        whereClause.OR = whereClause.OR.flatMap((baseCondition: any) =>
+          completedConditions.map((completedCondition: any) => ({
+            ...baseCondition,
+            ...completedCondition
+          }))
+        );
+      } else {
+        whereClause.OR = completedConditions;
+      }
     }
+
+    console.log(`📋 API: Received parameters - ownerWallet: ${ownerWallet}, status: ${status}`);
+    console.log(`📋 API: Fetching campaigns with whereClause:`, JSON.stringify(whereClause, null, 2));
 
     const campaigns = await prisma.campaign.findMany({
       where: whereClause,
@@ -174,6 +213,17 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    console.log(`📋 API: Found ${campaigns.length} campaigns matching criteria`);
+
+    // Log campaign details for debugging
+    if (campaigns.length > 0) {
+      console.log(`📋 API: Campaign breakdown:`);
+      campaigns.forEach(campaign => {
+        const isOwned = ownerWallet && campaign.ownerWallet.toLowerCase() === ownerWallet.toLowerCase();
+        console.log(`  - ${campaign.title} (${campaign.id}): status=${campaign.status}, funded=${campaign.funded}, owned=${isOwned}`);
+      });
+    }
+
     return NextResponse.json({
       success: true,
       campaigns: campaigns.map(campaign => ({
@@ -183,8 +233,8 @@ export async function GET(req: NextRequest) {
         organizationName: campaign.organizationName,
         organizationLogo: campaign.organizationLogo,
         questBanner: campaign.questBanner,
-        startDate: campaign.startDate,
-        endDate: campaign.endDate,
+        startDate: campaign.startDate.toISOString(),
+        endDate: campaign.endDate.toISOString(),
         maxParticipants: campaign.maxParticipants,
         currentParticipants: campaign.currentParticipants,
         rewardAmount: campaign.rewardAmount,
@@ -192,7 +242,19 @@ export async function GET(req: NextRequest) {
         distributionMethod: campaign.distributionMethod,
         numberOfWinners: campaign.numberOfWinners,
         ownerWallet: campaign.ownerWallet,
-        isActive: campaign.isActive,
+        status: campaign.status,
+        funded: campaign.funded,
+        blockchainTxHash: campaign.blockchainTxHash,
+        blockchainCampaignId: campaign.blockchainCampaignId ? parseInt(campaign.blockchainCampaignId) : null,
+        knowledgeBase: {
+          enabled: campaign.knowledgeBaseEnabled,
+          pdfFileName: campaign.knowledgeBasePdfFileName,
+          pdfUrl: campaign.knowledgeBasePdfUrl,
+          knowledgeBaseId: campaign.knowledgeBaseId,
+          status: campaign.knowledgeBaseStatus as 'uploading' | 'processing' | 'ready' | 'error' | undefined,
+          errorMessage: campaign.knowledgeBaseErrorMessage,
+          manualText: campaign.knowledgeBaseManualText,
+        },
         tasks: campaign.tasks,
         submissionCount: campaign._count.submissions,
         createdAt: campaign.createdAt,

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
@@ -47,13 +45,13 @@ export async function GET(req: NextRequest) {
           select: {
             displayName: true,
             avatarUrl: true,
-            twitterAuth: { select: { twitterUsername: true } }
+            twitterUsername: true
           }
         });
 
         return {
           walletAddress: userWallet,
-          displayName: userProfile?.displayName || userProfile?.twitterAuth?.twitterUsername || `${userWallet.slice(0, 6)}...${userWallet.slice(-4)}`,
+          displayName: userProfile?.displayName || userProfile?.twitterUsername || `${userWallet.slice(0, 6)}...${userWallet.slice(-4)}`,
           avatarUrl: userProfile?.avatarUrl || null,
           totalQP,
           completedTasks: completedTasks.length,

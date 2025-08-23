@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
         Key: key,
         Body: Buffer.from(arrayBuffer),
         ContentType: file.type || "application/octet-stream",
-        ACL: "public-read",
       })
     );
 

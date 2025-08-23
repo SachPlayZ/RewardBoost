@@ -12,6 +12,14 @@ A comprehensive Web3 quest and reward platform built with Next.js, wagmi, and sm
 - **Social Media Integration**: Built-in X/Twitter task automation with verification
 - **AI-Powered Assistance**: Generate campaign ideas and content with AI
 
+### 🚀 Auto-Approval System
+
+- **Automated Submission Processing**: No manual review needed - submissions are processed automatically
+- **Smart Validation**: Validates X/Twitter post URLs and other submission formats
+- **Real-time XP Awarding**: Automatically awards 60 XP when users complete all campaign tasks
+- **Blockchain Integration**: Uses owner's private key to call smart contracts directly
+- **Review Tab**: Campaign owners can still view all submissions in a dedicated review interface
+
 ### 👥 User Experience
 
 - **Interactive Dashboard**: Participate in quests and track progress
@@ -74,14 +82,22 @@ A comprehensive Web3 quest and reward platform built with Next.js, wagmi, and sm
    # - Contract addresses after deployment
    # - API keys for services
    # - RPC URLs (SEI testnet: https://evm-rpc-testnet.sei-apis.com)
+   # - Owner private key for auto-approval system
+   # - SEI RPC URL for blockchain interactions
    ```
+
+   **Important for Auto-Approval System:**
+
+   - Set `OWNER_PRIVATE_KEY` to your campaign owner's private key (without 0x prefix)
+   - Set `SEI_RPC_URL` to the SEI testnet RPC endpoint
+   - The system will use these to automatically approve submissions and award XP
 
 4. **Update contract address**
 
    ```typescript
    // In lib/contracts/quest-rewards-contract.ts
    export const QUEST_REWARDS_CONTRACT_ADDRESS =
-     "YOUR_DEPLOYED_CONTRACT_ADDRESS";
+     "0x3c21DB69Df3e069806AA55C4EbD54519B4504815"; // SEI Testnet
    ```
 
 5. **Run development server**

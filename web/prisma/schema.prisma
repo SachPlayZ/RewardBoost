@@ -12,24 +12,37 @@ datasource db {
 }
 
 model Campaign {
-    id                  String   @id @default(cuid())
-    title               String
-    description         String
-    organizationName    String
-    organizationLogo    String?
-    questBanner         String?
-    startDate           DateTime
-    endDate             DateTime
-    maxParticipants     Int
-    currentParticipants Int      @default(0)
-    rewardAmount        Float
-    rewardType          String // 'USDC' or 'SEI'
-    distributionMethod  String // 'lucky_draw' or 'equal_distribution'
-    numberOfWinners     Int?
-    ownerWallet         String // Campaign creator's wallet address
-    isActive            Boolean  @default(true)
-    createdAt           DateTime @default(now())
-    updatedAt           DateTime @updatedAt
+    id                   String   @id @default(cuid())
+    title                String
+    description          String
+    organizationName     String
+    organizationLogo     String?
+    questBanner          String?
+    startDate            DateTime
+    endDate              DateTime
+    maxParticipants      Int
+    currentParticipants  Int      @default(0)
+    rewardAmount         Float
+    rewardType           String // 'USDC' or 'SEI'
+    distributionMethod   String // 'lucky_draw' or 'equal_distribution'
+    numberOfWinners      Int?
+    ownerWallet          String // Campaign creator's wallet address
+    status               String   @default("draft") // 'draft', 'active', 'ended', 'cancelled'
+    funded               Boolean  @default(false) // Whether the campaign has been funded
+    blockchainTxHash     String? // Transaction hash when campaign is activated on blockchain
+    blockchainCampaignId String? // Campaign ID on blockchain after activation
+
+    // Knowledge Base fields
+    knowledgeBaseEnabled      Boolean @default(false)
+    knowledgeBasePdfFileName  String?
+    knowledgeBasePdfUrl       String?
+    knowledgeBaseId           String? // Rivalz knowledge base ID
+    knowledgeBaseStatus       String? // 'uploading', 'processing', 'ready', 'error'
+    knowledgeBaseErrorMessage String?
+    knowledgeBaseManualText   String? // Manual text input for Groq
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     // Relations
     tasks       Task[]
@@ -96,41 +109,23 @@ model Submission {
     @@map("submissions")
 }
 
-model TwitterAuth {
-    id                  String    @id @default(cuid())
-    userWallet          String    @unique
-    twitterId           String?   @unique
-    twitterUsername     String?
-    twitterName         String?
-    twitterProfileImage String?
-    accessToken         String?
-    refreshToken        String?
-    expiresAt           DateTime?
-    state               String? // OAuth state parameter
-    codeVerifier        String? // OAuth code verifier
-    createdAt           DateTime  @default(now())
-    updatedAt           DateTime  @updatedAt
-
-    // Relations
-    userProfile UserProfile?
-
-    @@map("twitter_auth")
-}
-
 model UserProfile {
-    id            String   @id @default(cuid())
-    walletAddress String   @unique
-    email         String?  @unique
-    twitterAuthId String?  @unique
+    id            String  @id @default(cuid())
+    walletAddress String  @unique
+    email         String? @unique
     displayName   String?
     avatarUrl     String?
     bio           String?
-    totalXP       Int      @default(0)
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
+    totalXP       Int     @default(0)
 
-    // Relations
-    twitterAuth TwitterAuth? @relation(fields: [twitterAuthId], references: [id])
+    // Twitter account fields (manual linking)
+    twitterId           String? @unique
+    twitterUsername     String?
+    twitterName         String?
+    twitterProfileImage String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     @@map("user_profiles")
 }

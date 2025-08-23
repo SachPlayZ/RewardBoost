@@ -1,4 +1,4 @@
-import type React from "react"
+import type React from "react";
 
 const AiCodeReviews: React.FC = () => {
   const themeVars = {
@@ -10,7 +10,7 @@ const AiCodeReviews: React.FC = () => {
     "--ai-border-main": "hsl(var(--foreground) / 0.1)",
     "--ai-highlight-primary": "hsl(var(--primary) / 0.12)",
     "--ai-highlight-header": "hsl(var(--accent) / 0.2)",
-  }
+  };
 
   return (
     <div
@@ -35,7 +35,8 @@ const AiCodeReviews: React.FC = () => {
           transform: "translateX(-50%) scale(0.9)",
           width: "340px",
           height: "205.949px",
-          background: "linear-gradient(180deg, var(--ai-background-color) 0%, transparent 100%)",
+          background:
+            "linear-gradient(180deg, var(--ai-background-color) 0%, transparent 100%)",
           opacity: 0.6,
           borderRadius: "8.826px",
           border: "0.791px solid var(--ai-border-color)",
@@ -54,7 +55,8 @@ const AiCodeReviews: React.FC = () => {
         >
           <div
             style={{
-              fontFamily: "'Geist Mono', 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+              fontFamily:
+                "'Geist Mono', 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
               fontSize: "9.562px",
               lineHeight: "14.711px",
               letterSpacing: "-0.2942px",
@@ -64,17 +66,35 @@ const AiCodeReviews: React.FC = () => {
               margin: 0,
             }}
           >
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>switch (type) {"{"}</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> case 'success':</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> return {"{"}</p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
-              {"          border: theme === 'dark' ? 'border-[rgba(34,197,94,0.4)]' : 'border-green-200',"}
+              switch (type) {"{"}
             </p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> icon: (</p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
-              {'            <svg className={\'baseIconClasses\'} fill="none" viewBox="0 0 14 14">'}
+              {" "}
+              case 'success':
             </p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> &lt;path</p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              return {"{"}
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {
+                "          border: theme === 'dark' ? 'border-[rgba(34,197,94,0.4)]' : 'border-green-200',"
+              }
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              icon: (
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {
+                '            <svg className={\'baseIconClasses\'} fill="none" viewBox="0 0 14 14">'
+              }
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              &lt;path
+            </p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
               {'                d="M3.85156 7.875L6.47656 10.5L10.8516 3.5"'}
             </p>
@@ -87,9 +107,17 @@ const AiCodeReviews: React.FC = () => {
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
               {'                strokeLinejoin="round"'}
             </p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>{'                strokeWidth="1.5"'}</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> /&gt;</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> &lt;/svg&gt;</p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {'                strokeWidth="1.5"'}
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              /&gt;
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              &lt;/svg&gt;
+            </p>
           </div>
         </div>
       </div>
@@ -146,7 +174,8 @@ const AiCodeReviews: React.FC = () => {
           />
           <div
             style={{
-              fontFamily: "'Geist Mono', 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+              fontFamily:
+                "'Geist Mono', 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
               fontSize: "10.279px",
               lineHeight: "15.814px",
               letterSpacing: "-0.3163px",
@@ -158,30 +187,58 @@ const AiCodeReviews: React.FC = () => {
               margin: 0,
             }}
           >
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>switch (type) {"{"}</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> case 'success':</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> return {"{"}</p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
-              {"          border: theme === 'dark' ? 'border-[rgba(34,197,94,0.4)]' : 'border-green-200',"}
+              switch (type) {"{"}
             </p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> icon: (</p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
-              {'            <svg className={\'baseIconClasses\'} fill="none" viewBox="0 0 14 14">'}
+              {" "}
+              case 'success':
             </p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> &lt;path</p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              return {"{"}
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {
+                "          border: theme === 'dark' ? 'border-[rgba(34,197,94,0.4)]' : 'border-green-200',"
+              }
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              icon: (
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {
+                '            <svg className={\'baseIconClasses\'} fill="none" viewBox="0 0 14 14">'
+              }
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              &lt;path
+            </p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
               {'                d="M3.85156 7.875L6.47656 10.5L10.8516 3.5"'}
             </p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>{'                stroke="#22C55E"'}</p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {'                stroke="#22C55E"'}
+            </p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
               {'                strokeLinecap="round"'}
             </p>
             <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
               {'                strokeLinejoin="round"'}
             </p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>{'                strokeWidth="1.5"'}</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> /&gt;</p>
-            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}> &lt;/svg&gt;</p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {'                strokeWidth="1.5"'}
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              /&gt;
+            </p>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap", fontWeight: 400 }}>
+              {" "}
+              &lt;/svg&gt;
+            </p>
           </div>
           <button
             style={{
@@ -212,7 +269,8 @@ const AiCodeReviews: React.FC = () => {
           >
             <span
               style={{
-                fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                fontFamily:
+                  "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                 fontWeight: 500,
               }}
             >
@@ -220,7 +278,8 @@ const AiCodeReviews: React.FC = () => {
             </span>
             <span
               style={{
-                fontFamily: "'SF Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+                fontFamily:
+                  "'SF Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                 fontWeight: 500,
               }}
             >
@@ -230,7 +289,7 @@ const AiCodeReviews: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AiCodeReviews
+export default AiCodeReviews;

@@ -3,15 +3,14 @@
 export const TOKEN_ADDRESSES = {
   // SEI Testnet Token Addresses
   TESTNET: {
-    USDC: "0x4fCF1784B31630811181f670Aea7Aea7A7bEF803eaED", // USDC address on SEI testnet
+    USDC: "0x4fCF1784B31630811181f670Aea7A7bEF803eaED", // USDC address on SEI testnet
     SEI: "0x0000000000000000000000000000000000000000", // Native SEI token (zero address)
   },
-  
-  // SEI Mainnet Token Addresses
+
+  // SEI Mainnet Token Addresses  
   MAINNET: {
-    USDC: "0x4fCF1784B31630811181f670Aea7Aea7A7bEF803eaED", // USDC address on SEI mainnet
+    USDC: "0x4fCF1784B31630811181f670Aea7A7bEF803eaED", // USDC address on SEI mainnet 
     SEI: "0x0000000000000000000000000000000000000000", // Native SEI token
-    WSEI: "0x...", // Wrapped SEI address
   }
 } as const;
 
@@ -33,23 +32,30 @@ export const TOKEN_METADATA = {
 } as const;
 
 // Get token address based on current network
-export function getTokenAddress(tokenSymbol: 'USDC' | 'SEI' | 'WSEI', isTestnet: boolean = true) {
+export function getTokenAddress(tokenSymbol: 'USDC' | 'SEI', isTestnet: boolean = true) {
   const network = isTestnet ? 'TESTNET' : 'MAINNET';
-  return TOKEN_ADDRESSES[network][tokenSymbol];
+  const address = TOKEN_ADDRESSES[network][tokenSymbol];
+
+  // Ensure we always return a valid address
+  if (!address) {
+    throw new Error(`Token address not found for ${tokenSymbol} on ${network}`);
+  }
+
+  return address;
 }
 
 // Token allowance and balance helper functions
 export const TOKEN_CONSTANTS = {
-  // Minimum amounts
-  MIN_REWARD_AMOUNT: 1, // $1 minimum reward
-  MIN_CAMPAIGN_DEPOSIT: 6, // $1 reward + $5 platform fee
+  // Minimum amounts - Updated to match new contract requirements
+  MIN_REWARD_AMOUNT: 1, // $1 minimum reward (contract now allows any amount > 0)
+  MIN_CAMPAIGN_DEPOSIT: 1.05, // $1 reward + $0.05 platform fee (5%)
   
   // Maximum amounts
   MAX_REWARD_AMOUNT: 100000, // $100k maximum reward
   MAX_PARTICIPANTS: 10000,
   
-  // Platform fees
-  PLATFORM_FEE: 5, // $5 flat fee in USD
+  // Platform fees - 5% of reward amount
+  PLATFORM_FEE_PERCENTAGE: 5, // 5% platform fee
   
   // XP Rewards
   XP_RATES: {

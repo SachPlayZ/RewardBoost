@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,9 @@ import {
   TaskType,
   ContentTone,
   calculateTotalDeposit,
+  getDepositBreakdown,
+  calculatePlatformFee,
+  PLATFORM_FEE_PERCENTAGE,
 } from "@/lib/types/campaign";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,8 +42,8 @@ import {
 } from "lucide-react";
 import { BasicInfoStep } from "@/components/campaign/BasicInfoStep";
 import { QuestConfigStep } from "@/components/campaign/QuestConfigStep";
+import { KnowledgeBaseStep } from "@/components/campaign/KnowledgeBaseStep";
 import { RewardsStep } from "@/components/campaign/RewardsStep";
-import { ReviewStep } from "@/components/campaign/ReviewStep";
 import { AIAssistantPanel } from "@/components/campaign/AIAssistantPanel";
 import { format } from "date-fns";
 
@@ -58,16 +61,16 @@ const steps = [
     icon: Calendar,
   },
   {
+    id: "knowledge",
+    title: "AI Knowledge",
+    description: "Upload knowledge base for AI tweets",
+    icon: Zap,
+  },
+  {
     id: "rewards",
     title: "Rewards",
     description: "Set up reward distribution",
     icon: Gift,
-  },
-  {
-    id: "review",
-    title: "Review",
-    description: "Review and deploy campaign",
-    icon: Check,
   },
 ];
 
@@ -76,8 +79,18 @@ export default function CreateCampaignPage() {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { isConnected, address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { createCampaign, isPending } = useQuestContract();
+
+  // Handle edit parameter - redirect to review step
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editCampaignId = urlParams.get("edit");
+    if (editCampaignId) {
+      // Redirect to review step for unfunded campaigns
+      setCurrentStep(3); // Review step
+    }
+  }, []);
 
   const methods = useForm<CampaignFormData>({
     resolver: zodResolver(CampaignFormSchema),
@@ -106,9 +119,12 @@ export default function CreateCampaignPage() {
           accountsToTag: [],
         },
       ],
+      knowledgeBase: {
+        enabled: false,
+      },
       rewardConfig: {
-        amount: 100,
-        type: RewardType.USDC,
+        amount: 2,
+        type: RewardType.SEI,
         distributionMethod: DistributionMethod.LUCKY_DRAW,
         numberOfWinners: 10,
       },
@@ -129,40 +145,65 @@ export default function CreateCampaignPage() {
   } = methods;
   const watchedValues = watch();
 
-  const onSubmit = async (data: CampaignFormData) => {
-    if (!isConnected) {
-      alert("Please connect your wallet first");
-      return;
-    }
+  // Campaign creation is now handled in the handleCreateAndRedirect function
 
-    if (!address) {
-      alert("Wallet address not found");
+  const nextStep = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCreateAndRedirect = async () => {
+    if (!isConnected || !address) {
+      alert("Please connect your wallet first");
       return;
     }
 
     try {
       setIsSubmitting(true);
+      console.log("🚀 Creating draft campaign...");
 
-      // Step 1: Create campaign in database via API
+      const formData = methods.getValues();
+
       const campaignData = {
-        title: data.title,
-        description: data.description,
-        organizationName: data.organizationName,
-        organizationLogo: data.organizationLogo,
-        questBanner: data.questBanner,
-        startDate: data.startDate.toISOString(),
-        endDate: data.endDate.toISOString(),
-        maxParticipants: data.maxParticipants,
-        rewardAmount: data.rewardConfig.amount,
-        rewardType: data.rewardConfig.type,
+        title: formData.title,
+        description:
+          formData.description || "Join our quest campaign and earn rewards!",
+        organizationName: formData.organizationName,
+        organizationLogo: formData.organizationLogo,
+        questBanner: formData.questBanner,
+        startDate: formData.startDate.toISOString(),
+        endDate: formData.endDate.toISOString(),
+        maxParticipants: formData.maxParticipants,
+        rewardAmount: formData.rewardConfig.amount,
+        rewardType: formData.rewardConfig.type,
         distributionMethod:
-          data.rewardConfig.distributionMethod === DistributionMethod.LUCKY_DRAW
+          formData.rewardConfig.distributionMethod ===
+          DistributionMethod.LUCKY_DRAW
             ? "lucky_draw"
             : "equal_distribution",
-        numberOfWinners: data.rewardConfig.numberOfWinners,
+        numberOfWinners: formData.rewardConfig.numberOfWinners,
         ownerWallet: address,
+        knowledgeBase: formData.knowledgeBase?.enabled
+          ? {
+              enabled: formData.knowledgeBase.enabled,
+              pdfFileName: formData.knowledgeBase.pdfFileName,
+              pdfUrl: formData.knowledgeBase.pdfUrl,
+              knowledgeBaseId: formData.knowledgeBase.knowledgeBaseId,
+              status: formData.knowledgeBase.status,
+              manualText: formData.knowledgeBase.manualText,
+              inputMethod: formData.knowledgeBase.inputMethod,
+              provider: formData.knowledgeBase.provider,
+            }
+          : null,
         tasks:
-          data.compulsoryTasks?.map((task) => ({
+          formData.compulsoryTasks?.map((task) => ({
             type:
               task.type === TaskType.X_FOLLOW
                 ? "x_follow"
@@ -180,11 +221,17 @@ export default function CreateCampaignPage() {
             accountsToTag: task.accountsToTag || [],
             customTitle: task.customTitle,
             customDescription: task.customDescription,
-            qpReward: 10, // Default QP reward
+            qpReward:
+              task.type === TaskType.X_FOLLOW
+                ? 10
+                : task.type === TaskType.X_POST
+                ? 50
+                : 10,
           })) || [],
       };
 
-      // Create campaign in database
+      console.log("📤 Saving draft campaign:", campaignData);
+
       const apiResponse = await fetch("/api/campaigns", {
         method: "POST",
         headers: {
@@ -194,51 +241,25 @@ export default function CreateCampaignPage() {
       });
 
       if (!apiResponse.ok) {
-        throw new Error("Failed to create campaign in database");
+        const errorText = await apiResponse.text();
+        console.error("❌ API error:", errorText);
+        throw new Error(`Failed to save draft campaign: ${errorText}`);
       }
 
-      const { campaign } = await apiResponse.json();
+      const { campaignId } = await apiResponse.json();
+      console.log("✅ Draft campaign saved:", campaignId);
 
-      // Step 2: Create campaign on blockchain
-      await createCampaign({
-        rewardTokenType: data.rewardConfig.type as "USDC" | "SEI",
-        distributionMethod:
-          data.rewardConfig.distributionMethod === DistributionMethod.LUCKY_DRAW
-            ? 0
-            : 1,
-        startTime: data.startDate.getTime(),
-        endTime: data.endDate.getTime(),
-        maxParticipants: data.maxParticipants,
-        totalRewardAmount: data.rewardConfig.amount.toString(),
-        numberOfWinners:
-          data.rewardConfig.numberOfWinners || data.maxParticipants,
-      });
-
-      // Step 3: Update campaign with blockchain data (this would be done via event listener in a real implementation)
-      console.log("Campaign created successfully:", {
-        api: campaign,
-        blockchain: "pending",
-      });
-
-      // Redirect to campaign page
-      router.push(`/campaigns/${campaign.id}`);
+      // Redirect to payment page
+      router.push(`/campaigns/${campaignId}/payment`);
     } catch (error) {
-      console.error("Error creating campaign:", error);
-      alert("Failed to create campaign. Please try again.");
+      console.error("❌ Error creating campaign:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to create campaign. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -338,55 +359,53 @@ export default function CreateCampaignPage() {
           {/* Main Form */}
           <div className="lg:col-span-3">
             <FormProvider {...methods}>
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <Card>
-                  <CardContent className="p-6">
-                    {currentStep === 0 && <BasicInfoStep />}
-                    {currentStep === 1 && <QuestConfigStep />}
-                    {currentStep === 2 && <RewardsStep />}
-                    {currentStep === 3 && <ReviewStep data={watchedValues} />}
-                  </CardContent>
-                </Card>
+              <Card>
+                <CardContent className="p-6">
+                  {currentStep === 0 && <BasicInfoStep />}
+                  {currentStep === 1 && <QuestConfigStep />}
+                  {currentStep === 2 && <KnowledgeBaseStep />}
+                  {currentStep === 3 && <RewardsStep />}
+                </CardContent>
+              </Card>
+              {/* Navigation */}
+              <div className="flex justify-between mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  disabled={currentStep === 0}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Previous
+                </Button>
 
-                {/* Navigation */}
-                <div className="flex justify-between mt-6">
+                {currentStep === steps.length - 1 ? (
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={currentStep === 0}
+                    onClick={handleCreateAndRedirect}
+                    disabled={isSubmitting}
                     className="gap-2"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Previous
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                        Creating Campaign...
+                      </>
+                    ) : (
+                      <>
+                        Create Campaign
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
                   </Button>
-
-                  {currentStep === steps.length - 1 ? (
-                    <Button
-                      type="submit"
-                      disabled={!isValid || isPending}
-                      className="gap-2"
-                    >
-                      {isPending ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="h-4 w-4" />
-                          Deploy Campaign
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button type="button" onClick={nextStep} className="gap-2">
-                      Next
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </form>
+                ) : (
+                  <Button type="button" onClick={nextStep} className="gap-2">
+                    Next
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </FormProvider>
           </div>
 
@@ -473,14 +492,20 @@ export default function CreateCampaignPage() {
                     Total Deposit Required
                   </div>
                   <div className="font-bold text-lg">
-                    $
-                    {calculateTotalDeposit(
-                      watchedValues.rewardConfig?.amount || 0
-                    )}
+                    {
+                      getDepositBreakdown(
+                        watchedValues.rewardConfig?.amount || 0,
+                        watchedValues.rewardConfig?.type || RewardType.USDC
+                      ).displayText
+                    }
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Includes ${watchedValues.rewardConfig?.amount || 0} rewards
-                    + $5 platform fee
+                    Platform fee:{" "}
+                    {calculatePlatformFee(
+                      watchedValues.rewardConfig?.amount || 0
+                    )}{" "}
+                    {watchedValues.rewardConfig?.type || RewardType.USDC} (
+                    {PLATFORM_FEE_PERCENTAGE}% of reward amount)
                   </div>
                 </div>
               </CardContent>

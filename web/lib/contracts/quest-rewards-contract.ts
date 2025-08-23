@@ -1,9 +1,8 @@
 import questRewardsContractAbiJson from './quest-rewards-contract-abi.json';
-export const QuestRewardsContractABI = questRewardsContractAbiJson;
+export const QuestRewardsContractABI = questRewardsContractAbiJson as any;
 
-// Contract address - update this with your deployed contract address
-// Example: Replace with your actual deployed contract address
-export const QUEST_REWARDS_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_QUEST_REWARDS_CONTRACT_ADDRESS as `0x${string}` || "0x742d35Cc6635C0532925a3b8D7Fb8d22567b9E52" as const;
+// Contract addresses - updated with latest deployed contract (SEI Testnet)
+export const QUEST_REWARDS_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_QUEST_REWARDS_CONTRACT_ADDRESS as `0x${string}` || "0x318Fb7B367F00504Af594A290Bdc3C2cCD7b2BFd" as const;
 
 // Enum mappings
 export enum RewardDistributionMethod {
