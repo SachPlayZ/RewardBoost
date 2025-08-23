@@ -27,14 +27,19 @@ import {
   X,
   Wand2,
   Lightbulb,
-  Copy,
   Check,
   RefreshCw,
-  MessageSquare,
   Target,
   Gift,
   Calendar,
+  Zap,
+  Brain,
+  TrendingUp,
+  Users,
+  Clock,
+  Star,
 } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 interface AIAssistantPanelProps {
   onClose: () => void;
@@ -42,83 +47,150 @@ interface AIAssistantPanelProps {
   onApplySuggestion: (suggestions: Partial<CampaignFormData>) => void;
 }
 
+interface GenerationFormData {
+  prompt: string;
+  category: string;
+  tone: ContentTone;
+  language: string;
+}
+
 export function AIAssistantPanel({
   onClose,
   currentData,
   onApplySuggestion,
 }: AIAssistantPanelProps) {
-  const [activeTab, setActiveTab] = useState<
-    "generate" | "improve" | "content"
-  >("generate");
+  const [activeTab, setActiveTab] = useState<"generate" | "tips">("generate");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string>("");
-  const [category, setCategory] = useState("");
-  const [difficulty, setDifficulty] = useState("");
-  const [tone, setTone] = useState<ContentTone>(ContentTone.CASUAL);
-  const [language, setLanguage] = useState("English");
+  const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  // Sample AI-generated suggestions (in a real app, this would call an AI API)
-  const generateCampaignIdeas = async () => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<GenerationFormData>({
+    defaultValues: {
+      prompt: "",
+      category: "",
+      tone: ContentTone.CASUAL,
+      language: "English",
+    },
+  });
+
+  const watchedValues = watch();
+
+  const generateCampaignContent = async (data: GenerationFormData) => {
+    if (!data.prompt.trim()) {
+      setError("Please enter a prompt for campaign generation");
+      return;
+    }
+
     setIsGenerating(true);
+    setError(null);
 
-    // Simulate AI generation
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const response = await fetch("/api/ai/generate-campaign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: data.prompt,
+          category: data.category || "General",
+          tone: data.tone,
+          language: data.language,
+        }),
+      });
 
-    const suggestions = [
-      {
-        title: "Web3 Community Builder Challenge",
-        description:
-          "Engage with the decentralized future by participating in meaningful discussions, connecting with fellow builders, and sharing your vision for Web3. Complete social tasks to earn rewards while growing the community.",
-        category: "Community Building",
-        estimatedParticipants: 750,
-      },
-      {
-        title: "DeFi Explorer Quest",
-        description:
-          "Discover the world of decentralized finance through educational content sharing and community engagement. Learn about yield farming, liquidity provision, and governance while earning rewards.",
-        category: "Education",
-        estimatedParticipants: 500,
-      },
-      {
-        title: "NFT Creator Spotlight",
-        description:
-          "Showcase your creativity and artistic vision by sharing your NFT journey. Connect with other creators, share techniques, and inspire the next generation of digital artists.",
-        category: "Creative",
-        estimatedParticipants: 1000,
-      },
-    ];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Failed to generate campaign content"
+        );
+      }
 
-    setIsGenerating(false);
-    return suggestions;
+      const result = await response.json();
+
+      // Directly apply the generated content without displaying it
+      onApplySuggestion({
+        title: result.title,
+        description: result.description,
+      });
+
+      // Show success state and close
+      setIsSuccess(true);
+
+      // Close the panel after a brief success message
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const generateContent = async (prompt: string) => {
-    setIsGenerating(true);
+  const categories = [
+    "DeFi & Finance",
+    "NFTs & Digital Art",
+    "Gaming & Metaverse",
+    "Community Building",
+    "Education & Learning",
+    "Social Impact",
+    "Innovation & Tech",
+    "Trading & Investment",
+    "Governance & DAOs",
+    "Infrastructure",
+    "General",
+  ];
 
-    // Simulate AI content generation
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const contents = {
-      casual: `🚀 Just dove into the future of Web3 and I'm blown away! The possibilities for decentralized innovation are endless. From DeFi protocols revolutionizing finance to NFTs empowering creators - we're building something incredible together. What's your favorite Web3 project right now? Let's discuss! #Web3 #DeFi #Innovation #Community`,
-
-      formal: `The Web3 ecosystem represents a paradigm shift towards decentralized technologies that prioritize user ownership and community governance. Through blockchain innovation, we are witnessing the emergence of new financial instruments, digital ownership models, and collaborative frameworks that challenge traditional centralized systems. The implications for future technological development are profound. #Web3 #Blockchain #Decentralization #Technology`,
-
-      engaging: `🔥 Web3 is not just technology - it's a movement! Every day, brilliant minds are pushing boundaries, creating solutions that put power back into the hands of users. Whether you're building, investing, or just learning - you're part of this revolution. The future is decentralized, and it's being written right now. What role will you play? #Web3Revolution #BuildTheFuture #Decentralized #Community`,
-    };
-
-    setGeneratedContent(
-      contents[tone as keyof typeof contents] || contents.casual
-    );
-    setIsGenerating(false);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
+  const tipsForSuccess = [
+    {
+      icon: Target,
+      title: "Clear Objectives",
+      description: "Define specific, measurable goals for your campaign",
+      color: "text-blue-600",
+    },
+    {
+      icon: Users,
+      title: "Target Audience",
+      description: "Understand who you're trying to reach and engage",
+      color: "text-green-600",
+    },
+    {
+      icon: Gift,
+      title: "Appropriate Rewards",
+      description: "Set realistic reward amounts that motivate participation",
+      color: "text-purple-600",
+    },
+    {
+      icon: Clock,
+      title: "Timing Matters",
+      description: "Choose optimal start/end dates for maximum engagement",
+      color: "text-orange-600",
+    },
+    {
+      icon: Zap,
+      title: "Simple Tasks",
+      description: "Break complex requirements into easy-to-complete steps",
+      color: "text-red-600",
+    },
+    {
+      icon: Star,
+      title: "Quality Content",
+      description: "Use high-quality images and compelling descriptions",
+      color: "text-yellow-600",
+    },
+  ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden ">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-5xl max-h-[90vh] overflow-hidden backdrop-blur-md border-0 shadow-2xl">
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -128,7 +200,8 @@ export function AIAssistantPanel({
               <div>
                 <CardTitle>AI Campaign Assistant</CardTitle>
                 <CardDescription>
-                  Let AI help you create engaging quest ideas and content
+                  Let AI help you create engaging campaign titles and
+                  descriptions
                 </CardDescription>
               </div>
             </div>
@@ -148,24 +221,16 @@ export function AIAssistantPanel({
                   className="w-full justify-start gap-2"
                   onClick={() => setActiveTab("generate")}
                 >
+                  <Brain className="h-4 w-4" />
+                  AI Generator
+                </Button>
+                <Button
+                  variant={activeTab === "tips" ? "default" : "ghost"}
+                  className="w-full justify-start gap-2"
+                  onClick={() => setActiveTab("tips")}
+                >
                   <Lightbulb className="h-4 w-4" />
-                  Generate Ideas
-                </Button>
-                <Button
-                  variant={activeTab === "improve" ? "default" : "ghost"}
-                  className="w-full justify-start gap-2"
-                  onClick={() => setActiveTab("improve")}
-                >
-                  <Wand2 className="h-4 w-4" />
-                  Improve Current
-                </Button>
-                <Button
-                  variant={activeTab === "content" ? "default" : "ghost"}
-                  className="w-full justify-start gap-2"
-                  onClick={() => setActiveTab("content")}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Generate Content
+                  Tips for Success
                 </Button>
               </div>
             </div>
@@ -194,268 +259,197 @@ export function AIAssistantPanel({
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">
-                    Generate Campaign Ideas
+                    Generate Campaign Content
                   </h3>
                   <p className="text-muted-foreground">
-                    Let AI help you create engaging quest ideas based on your
-                    preferences.
+                    Describe your campaign idea and let AI generate a compelling
+                    title and description.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Category</label>
-                    <Input
-                      placeholder="e.g., DeFi, NFTs, Gaming"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Difficulty</label>
-                    <Select value={difficulty} onValueChange={setDifficulty}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select difficulty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">
-                          Intermediate
-                        </SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={generateCampaignIdeas}
-                  disabled={isGenerating}
-                  className="gap-2"
+                <form
+                  onSubmit={handleSubmit(generateCampaignContent)}
+                  className="space-y-4"
                 >
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Generating Ideas...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" />
-                      Generate Ideas
-                    </>
-                  )}
-                </Button>
-
-                {/* Sample generated ideas */}
-                <div className="space-y-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium">
-                          Web3 Community Builder Challenge
-                        </h4>
-                        <Badge variant="secondary">Community</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Engage with the decentralized future by participating in
-                        meaningful discussions, connecting with fellow builders,
-                        and sharing your vision for Web3.
+                  <div>
+                    <label className="text-sm font-medium">
+                      Campaign Prompt
+                    </label>
+                    <Textarea
+                      {...register("prompt", {
+                        required: "Prompt is required",
+                      })}
+                      placeholder="Describe your campaign idea, goals, target audience, or any specific requirements..."
+                      className="mt-1 min-h-[100px]"
+                    />
+                    {errors.prompt && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.prompt.message}
                       </p>
-                      <div className="flex justify-between items-center">
-                        <div className="text-xs text-muted-foreground">
-                          Est. 750 participants
-                        </div>
-                        <Button size="sm" variant="outline">
-                          Use This Idea
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Category</label>
+                      <Select
+                        value={watchedValues.category}
+                        onValueChange={(value) => setValue("category", value)}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Tone</label>
+                      <Select
+                        value={watchedValues.tone}
+                        onValueChange={(value) =>
+                          setValue("tone", value as ContentTone)
+                        }
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={ContentTone.CASUAL}>
+                            Casual
+                          </SelectItem>
+                          <SelectItem value={ContentTone.FORMAL}>
+                            Formal
+                          </SelectItem>
+                          <SelectItem value={ContentTone.FRIENDLY}>
+                            Friendly
+                          </SelectItem>
+                          <SelectItem value={ContentTone.PROFESSIONAL}>
+                            Professional
+                          </SelectItem>
+                          <SelectItem value={ContentTone.ENGAGING}>
+                            Engaging
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Language</label>
+                      <Select
+                        value={watchedValues.language}
+                        onValueChange={(value) => setValue("language", value)}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="English">English</SelectItem>
+                          <SelectItem value="Spanish">Spanish</SelectItem>
+                          <SelectItem value="French">French</SelectItem>
+                          <SelectItem value="German">German</SelectItem>
+                          <SelectItem value="Japanese">Japanese</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isGenerating}
+                    className="gap-2 w-full"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Generating Campaign Content...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Generate with AI
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {isSuccess && (
+                  <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800 dark:text-green-200">
+                      <strong>Success!</strong> AI-generated content has been
+                      automatically applied to your campaign. The panel will
+                      close shortly.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             )}
 
-            {activeTab === "improve" && (
+            {activeTab === "tips" && (
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">
-                    Improve Current Campaign
+                    Tips for Campaign Success
                   </h3>
                   <p className="text-muted-foreground">
-                    Get AI suggestions to enhance your campaign based on current
-                    configuration.
+                    Follow these proven strategies to create engaging and
+                    successful campaigns.
                   </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tipsForSuccess.map((tip, index) => {
+                    const Icon = tip.icon;
+                    return (
+                      <Card
+                        key={index}
+                        className="hover:shadow-md transition-shadow"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`p-2 rounded-lg bg-muted ${tip.color.replace(
+                                "text-",
+                                "bg-"
+                              )} bg-opacity-20`}
+                            >
+                              <Icon className={`h-5 w-5 ${tip.color}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium mb-1">{tip.title}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {tip.description}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
 
                 <Alert>
-                  <Lightbulb className="h-4 w-4" />
+                  <TrendingUp className="h-4 w-4" />
                   <AlertDescription>
-                    <div className="font-medium mb-2">
-                      AI Suggestions for "{currentData.title || "Your Campaign"}
-                      ":
-                    </div>
-                    <ul className="text-sm space-y-1">
-                      <li>
-                        • Consider adding more specific completion criteria to
-                        quest steps
-                      </li>
-                      <li>
-                        • Include hashtag requirements for better social media
-                        reach
-                      </li>
-                      <li>
-                        • Increase XP rewards for verified users to encourage
-                        quality participation
-                      </li>
-                      <li>• Add time-based bonuses for early participants</li>
-                    </ul>
+                    <strong>Pro Tip:</strong> Use the AI generator above to
+                    create compelling content that follows these best practices.
+                    The AI is trained to generate titles and descriptions that
+                    align with successful campaign strategies.
                   </AlertDescription>
                 </Alert>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Target className="h-4 w-4" />
-                        <h4 className="font-medium">Quest Steps</h4>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Add verification methods and clear success metrics
-                      </p>
-                      <Button size="sm" variant="outline">
-                        Apply
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Gift className="h-4 w-4" />
-                        <h4 className="font-medium">Rewards</h4>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Optimize distribution method for better engagement
-                      </p>
-                      <Button size="sm" variant="outline">
-                        Apply
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "content" && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    Generate Social Content
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Create engaging social media content for your campaign
-                    participants.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Tone</label>
-                    <Select
-                      value={tone}
-                      onValueChange={(value) => setTone(value as ContentTone)}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ContentTone.CASUAL}>
-                          Casual
-                        </SelectItem>
-                        <SelectItem value={ContentTone.FORMAL}>
-                          Formal
-                        </SelectItem>
-                        <SelectItem value={ContentTone.FRIENDLY}>
-                          Friendly
-                        </SelectItem>
-                        <SelectItem value={ContentTone.PROFESSIONAL}>
-                          Professional
-                        </SelectItem>
-                        <SelectItem value={ContentTone.ENGAGING}>
-                          Engaging
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Language</label>
-                    <Select value={language} onValueChange={setLanguage}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Spanish">Spanish</SelectItem>
-                        <SelectItem value="French">French</SelectItem>
-                        <SelectItem value="German">German</SelectItem>
-                        <SelectItem value="Japanese">Japanese</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => generateContent("Web3 discussion post")}
-                  disabled={isGenerating}
-                  className="gap-2"
-                >
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Generating Content...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4" />
-                      Generate Content
-                    </>
-                  )}
-                </Button>
-
-                {generatedContent && (
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-medium">Generated Content</h4>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copyToClipboard(generatedContent)}
-                          className="gap-2"
-                        >
-                          <Copy className="h-3 w-3" />
-                          Copy
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={generatedContent}
-                        onChange={(e) => setGeneratedContent(e.target.value)}
-                        className="min-h-[150px]"
-                        placeholder="Generated content will appear here..."
-                      />
-                      <div className="flex justify-between items-center mt-3">
-                        <div className="text-xs text-muted-foreground">
-                          {generatedContent.length}/280 characters
-                        </div>
-                        <Button size="sm" className="gap-2">
-                          <Check className="h-3 w-3" />
-                          Use This Content
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </div>
             )}
           </div>

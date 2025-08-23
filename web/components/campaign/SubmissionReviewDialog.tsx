@@ -282,7 +282,10 @@ function SubmissionCard({ submission }: SubmissionCardProps) {
               <p className="text-sm text-muted-foreground">
                 {submission.twitterUsername ? (
                   <span className="flex items-center gap-1">
-                    <Twitter className="h-3 w-3" />@{submission.twitterUsername}
+                    <Twitter className="h-3 w-3" />
+                    {submission.twitterUsername.startsWith("@")
+                      ? submission.twitterUsername
+                      : `@${submission.twitterUsername}`}
                   </span>
                 ) : (
                   <>

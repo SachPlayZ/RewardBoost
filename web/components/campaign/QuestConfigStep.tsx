@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { TimePicker } from "@/components/ui/time-picker";
 import {
   Card,
   CardContent,
@@ -41,7 +42,7 @@ import {
 } from "lucide-react";
 
 export function QuestConfigStep() {
-  const { control, watch } = useFormContext<CampaignFormData>();
+  const { control, watch, setValue } = useFormContext<CampaignFormData>();
 
   const watchedStartDate = watch("startDate");
 
@@ -80,7 +81,7 @@ export function QuestConfigStep() {
               field: { value?: Date; onChange: (v?: Date) => void };
             }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Start Date (UTC) *</FormLabel>
+                <FormLabel>Start Date *</FormLabel>
                 <FormControl>
                   <div className="space-y-2">
                     <Popover>
@@ -108,16 +109,14 @@ export function QuestConfigStep() {
                               field.onChange(undefined);
                               return;
                             }
-                            const hours = field.value?.getUTCHours() ?? 0;
-                            const minutes = field.value?.getUTCMinutes() ?? 0;
+                            const hours = field.value?.getHours() ?? 0;
+                            const minutes = field.value?.getMinutes() ?? 0;
                             const combined = new Date(
-                              Date.UTC(
-                                d.getFullYear(),
-                                d.getMonth(),
-                                d.getDate(),
-                                hours,
-                                minutes
-                              )
+                              d.getFullYear(),
+                              d.getMonth(),
+                              d.getDate(),
+                              hours,
+                              minutes
                             );
                             field.onChange(combined);
                           }}
@@ -143,23 +142,17 @@ export function QuestConfigStep() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input
-                      type="time"
-                      step={60}
+                    <TimePicker
                       value={(() => {
                         const v = field.value;
-                        const hh = String(v?.getUTCHours() ?? 0).padStart(
-                          2,
-                          "0"
-                        );
-                        const mm = String(v?.getUTCMinutes() ?? 0).padStart(
+                        const hh = String(v?.getHours() ?? 0).padStart(2, "0");
+                        const mm = String(v?.getMinutes() ?? 0).padStart(
                           2,
                           "0"
                         );
                         return `${hh}:${mm}`;
                       })()}
-                      onChange={(e) => {
-                        const time = e.target.value; // HH:MM
+                      onChange={(time) => {
                         const [hhStr, mmStr] = time.split(":");
                         const hh = Number(hhStr || 0);
                         const mm = Number(mmStr || 0);
@@ -174,9 +167,19 @@ export function QuestConfigStep() {
                           )
                         );
                         field.onChange(combined);
+
+                        // Adjust end date if it becomes invalid
+                        const endDate = watch("endDate");
+                        if (endDate && endDate <= combined) {
+                          // Set end date to start date + 10 minutes
+                          const newEndDate = new Date(
+                            combined.getTime() + 10 * 60 * 1000
+                          );
+                          setValue("endDate", newEndDate);
+                        }
                       }}
                     />
-                    <FormDescription>Time in UTC</FormDescription>
+                    <FormDescription>Select time in UTC</FormDescription>
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -193,7 +196,7 @@ export function QuestConfigStep() {
               field: { value?: Date; onChange: (v?: Date) => void };
             }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>End Date (UTC) *</FormLabel>
+                <FormLabel>End Date *</FormLabel>
                 <FormControl>
                   <div className="space-y-2">
                     <Popover>
@@ -221,86 +224,127 @@ export function QuestConfigStep() {
                               field.onChange(undefined);
                               return;
                             }
-                            const hours = field.value?.getUTCHours() ?? 0;
-                            const minutes = field.value?.getUTCMinutes() ?? 0;
+                            const hours = field.value?.getHours() ?? 0;
+                            const minutes = field.value?.getMinutes() ?? 0;
                             const combined = new Date(
-                              Date.UTC(
-                                d.getFullYear(),
-                                d.getMonth(),
-                                d.getDate(),
-                                hours,
-                                minutes
-                              )
+                              d.getFullYear(),
+                              d.getMonth(),
+                              d.getDate(),
+                              hours,
+                              minutes
                             );
                             field.onChange(combined);
+
+                            // Adjust end date if it becomes invalid
+                            const endDate = watch("endDate");
+                            if (endDate && endDate <= combined) {
+                              // Set end date to start date + 10 minutes
+                              const newEndDate = new Date(
+                                combined.getTime() + 10 * 60 * 1000
+                              );
+                              setValue("endDate", newEndDate);
+                            }
                           }}
                           disabled={(date) => {
                             if (!watchedStartDate) return true;
-                            const startUtc = new Date(
-                              Date.UTC(
-                                watchedStartDate.getUTCFullYear(),
-                                watchedStartDate.getUTCMonth(),
-                                watchedStartDate.getUTCDate()
-                              )
+                            const startDate = new Date(
+                              watchedStartDate.getFullYear(),
+                              watchedStartDate.getMonth(),
+                              watchedStartDate.getDate()
                             );
-                            const maxUtc = new Date(
-                              startUtc.getTime() + 7 * 24 * 60 * 60 * 1000
+                            const maxDate = new Date(
+                              startDate.getTime() + 7 * 24 * 60 * 60 * 1000 // Keep max 7 days
                             );
-                            const dateUtc = new Date(
-                              Date.UTC(
-                                date.getFullYear(),
-                                date.getMonth(),
-                                date.getDate()
-                              )
+                            const selectedDate = new Date(
+                              date.getFullYear(),
+                              date.getMonth(),
+                              date.getDate()
                             );
-                            return dateUtc < startUtc || dateUtc > maxUtc;
+                            return (
+                              selectedDate < startDate || selectedDate > maxDate
+                            );
                           }}
                           initialFocus
                         />
                       </PopoverContent>
                     </Popover>
-                    <Input
-                      type="time"
-                      step={60}
+                    <TimePicker
                       value={(() => {
                         const v = field.value;
-                        const hh = String(v?.getUTCHours() ?? 0).padStart(
-                          2,
-                          "0"
-                        );
-                        const mm = String(v?.getUTCMinutes() ?? 0).padStart(
+                        const hh = String(v?.getHours() ?? 0).padStart(2, "0");
+                        const mm = String(v?.getMinutes() ?? 0).padStart(
                           2,
                           "0"
                         );
                         return `${hh}:${mm}`;
                       })()}
-                      onChange={(e) => {
-                        const time = e.target.value; // HH:MM
+                      onChange={(time) => {
                         const [hhStr, mmStr] = time.split(":");
                         const hh = Number(hhStr || 0);
                         const mm = Number(mmStr || 0);
                         const base =
                           field.value ?? watchedStartDate ?? new Date();
                         const combined = new Date(
-                          Date.UTC(
-                            base.getUTCFullYear(),
-                            base.getUTCMonth(),
-                            base.getUTCDate(),
-                            hh,
-                            mm
-                          )
+                          base.getFullYear(),
+                          base.getMonth(),
+                          base.getDate(),
+                          hh,
+                          mm
                         );
+
+                        // Validate minimum duration (10 minutes)
+                        if (watchedStartDate) {
+                          const minEndTime = new Date(
+                            watchedStartDate.getTime() + 10 * 60 * 1000
+                          ); // 10 minutes
+                          if (combined < minEndTime) {
+                            // Set to minimum allowed time
+                            field.onChange(minEndTime);
+                            return;
+                          }
+                        }
+
                         field.onChange(combined);
                       }}
                     />
                     <FormDescription>
-                      Time in UTC (max 7 days from start)
+                      Select time (max 7 days from start, min 10 minutes
+                      duration)
                     </FormDescription>
                   </div>
                 </FormControl>
                 <FormDescription>
-                  Maximum duration: 7 days from start date
+                  Duration: 10 minutes minimum, 7 days maximum
                 </FormDescription>
+                {watchedStartDate && watch("endDate") && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Current duration:{" "}
+                    {(() => {
+                      const start = watchedStartDate;
+                      const end = watch("endDate");
+                      if (!start || !end) return "";
+
+                      const diffMs = end.getTime() - start.getTime();
+                      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                      const diffHours = Math.floor(diffMinutes / 60);
+                      const diffDays = Math.floor(diffHours / 24);
+
+                      if (diffDays > 0) {
+                        return `${diffDays} day${diffDays > 1 ? "s" : ""} ${
+                          diffHours % 24
+                        } hour${diffHours % 24 > 1 ? "s" : ""}`;
+                      } else if (diffHours > 0) {
+                        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ${
+                          diffMinutes % 60
+                        } minute${diffMinutes % 60 > 1 ? "s" : ""}`;
+                      } else {
+                        return `${diffMinutes} minute${
+                          diffMinutes > 1 ? "s" : ""
+                        }`;
+                      }
+                    })()}
+                  </div>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -402,13 +446,17 @@ export function QuestConfigStep() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="@username"
+                        placeholder="username"
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value)}
+                        onChange={(e) => {
+                          // Remove @ symbol if user types it, we'll add it in display
+                          const value = e.target.value.replace(/^@/, "");
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
-                      Enter the X username (with or without @)
+                      Enter the X username (without @ symbol)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -497,32 +545,61 @@ export function QuestConfigStep() {
                       value?: string[];
                       onChange: (v: string[]) => void;
                     };
-                  }) => (
-                    <FormItem className="col-span-full">
-                      <FormLabel className="flex items-center gap-2">
-                        <Hash className="h-4 w-4" />
-                        Required Hashtags
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="#web3 #quest #campaign (comma separated)"
-                          value={field.value?.join(", ") || ""}
-                          onChange={(e) => {
-                            const tags = e.target.value
-                              .split(",")
-                              .map((tag) => tag.trim())
-                              .filter((tag) => tag.length > 0);
-                            field.onChange(tags);
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Hashtags that must be included in posts (comma
-                        separated)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  }) => {
+                    const [inputValue, setInputValue] = React.useState(
+                      field.value?.join(", ") || ""
+                    );
+
+                    React.useEffect(() => {
+                      setInputValue(field.value?.join(", ") || "");
+                    }, [field.value]);
+
+                    const handleChange = (
+                      e: React.ChangeEvent<HTMLInputElement>
+                    ) => {
+                      setInputValue(e.target.value);
+                    };
+
+                    const handleBlur = () => {
+                      const tags = inputValue
+                        .split(",")
+                        .map((tag) => tag.trim().replace(/^#/, "")) // Remove # symbols
+                        .filter((tag) => tag.length > 0);
+                      field.onChange(tags);
+                    };
+
+                    const handleKeyDown = (
+                      e: React.KeyboardEvent<HTMLInputElement>
+                    ) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleBlur();
+                      }
+                    };
+
+                    return (
+                      <FormItem className="col-span-full">
+                        <FormLabel className="flex items-center gap-2">
+                          <Hash className="h-4 w-4" />
+                          Required Hashtags
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="web3, quest, campaign (comma separated, without #)"
+                            value={inputValue}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            onKeyDown={handleKeyDown}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Hashtags that must be included in posts (comma
+                          separated, without # symbols)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
@@ -535,32 +612,61 @@ export function QuestConfigStep() {
                       value?: string[];
                       onChange: (v: string[]) => void;
                     };
-                  }) => (
-                    <FormItem className="col-span-full">
-                      <FormLabel className="flex items-center gap-2">
-                        <AtSign className="h-4 w-4" />
-                        Accounts to Tag
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="@account1, @account2 (comma separated)"
-                          value={field.value?.join(", ") || ""}
-                          onChange={(e) => {
-                            const accounts = e.target.value
-                              .split(",")
-                              .map((account) => account.trim())
-                              .filter((account) => account.length > 0);
-                            field.onChange(accounts);
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        X accounts that must be tagged in posts (comma
-                        separated)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  }) => {
+                    const [inputValue, setInputValue] = React.useState(
+                      field.value?.join(", ") || ""
+                    );
+
+                    React.useEffect(() => {
+                      setInputValue(field.value?.join(", ") || "");
+                    }, [field.value]);
+
+                    const handleChange = (
+                      e: React.ChangeEvent<HTMLInputElement>
+                    ) => {
+                      setInputValue(e.target.value);
+                    };
+
+                    const handleBlur = () => {
+                      const accounts = inputValue
+                        .split(",")
+                        .map((account) => account.trim().replace(/^@/, "")) // Remove @ symbols
+                        .filter((account) => account.length > 0);
+                      field.onChange(accounts);
+                    };
+
+                    const handleKeyDown = (
+                      e: React.KeyboardEvent<HTMLInputElement>
+                    ) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleBlur();
+                      }
+                    };
+
+                    return (
+                      <FormItem className="col-span-full">
+                        <FormLabel className="flex items-center gap-2">
+                          <AtSign className="h-4 w-4" />
+                          Accounts to Tag
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="account1, account2 (comma separated, without @)"
+                            value={inputValue}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            onKeyDown={handleKeyDown}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          X accounts that must be tagged in posts (comma
+                          separated, without @ symbols)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
             )}

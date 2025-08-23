@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useFormContext } from "@/components/ui/form";
 //
 import { CampaignFormData } from "@/lib/types/campaign";
@@ -16,9 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Wand2 } from "lucide-react";
 
 export function BasicInfoStep() {
   const { control, setValue } = useFormContext<CampaignFormData>();
+  const [isBeautifying, setIsBeautifying] = useState(false);
 
   const uploadToS3 = async (file: File, folder: string) => {
     const body = new FormData();
@@ -77,7 +79,15 @@ export function BasicInfoStep() {
             };
           }) => (
             <FormItem>
-              <FormLabel>Campaign Title *</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                Campaign Title *
+                {field.value && field.value.length > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full dark:bg-green-900/20 dark:text-green-400">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    AI Generated
+                  </span>
+                )}
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Enter a short, action-oriented title"
@@ -109,14 +119,71 @@ export function BasicInfoStep() {
             };
           }) => (
             <FormItem>
-              <FormLabel>Campaign Description *</FormLabel>
+              <FormLabel className="flex items-center gap-2">
+                Campaign Description *
+                {field.value && field.value.length > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full dark:bg-green-900/20 dark:text-green-400">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    AI Generated
+                  </span>
+                )}
+              </FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Describe what users will achieve and why it matters..."
-                  className="min-h-[120px]"
-                  maxLength={500}
-                  {...field}
-                />
+                <div className="relative">
+                  <Textarea
+                    placeholder="Describe what users will achieve and why it matters..."
+                    className="min-h-[120px] pr-12"
+                    maxLength={500}
+                    {...field}
+                  />
+                  {field.value && field.value.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-orange-100 dark:hover:bg-orange-900/20"
+                      disabled={isBeautifying}
+                      onClick={async () => {
+                        setIsBeautifying(true);
+                        try {
+                          const response = await fetch(
+                            "/api/ai/beautify-description",
+                            {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                description: field.value,
+                              }),
+                            }
+                          );
+
+                          if (response.ok) {
+                            const result = await response.json();
+                            field.onChange({
+                              target: { value: result.beautifiedDescription },
+                            } as React.ChangeEvent<HTMLTextAreaElement>);
+                          }
+                        } catch (error) {
+                          console.error(
+                            "Failed to beautify description:",
+                            error
+                          );
+                        } finally {
+                          setIsBeautifying(false);
+                        }
+                      }}
+                      title="Beautify description with AI"
+                    >
+                      {isBeautifying ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-600 border-t-transparent" />
+                      ) : (
+                        <Wand2 className="h-4 w-4 text-orange-600" />
+                      )}
+                    </Button>
+                  )}
+                </div>
               </FormControl>
               <FormDescription>
                 Explain the purpose, benefits, and what participants will gain

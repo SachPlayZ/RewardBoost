@@ -317,13 +317,20 @@ export function useQuestContract() {
     return hash;
   };
 
-  const endCampaignAndDistribute = async (campaignId: bigint) => {
+  const endCampaignAndDistribute = async (
+    campaignId: bigint,
+    options?: {
+      onSuccess?: (data: any) => void;
+      onSettled?: (data: any, error: any) => void;
+      onError?: (error: any) => void;
+    }
+  ) => {
     const hash = await writeContractAsync({
       address: QUEST_REWARDS_CONTRACT_ADDRESS,
       abi: QuestRewardsContractABI,
       functionName: 'endCampaignAndDistribute',
       args: [campaignId],
-    } as any);
+    } as any, options);
     return hash;
   };
 

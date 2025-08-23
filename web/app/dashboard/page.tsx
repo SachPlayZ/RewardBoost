@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
@@ -15,51 +15,27 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuestContract } from "@/hooks/use-quest-contract";
+import Link from "next/link";
+
 import {
   useUnifiedUserStats,
-  useUnifiedCampaigns,
   useValidatedCampaigns,
-  useUnifiedLeaderboard,
   useUnifiedJoinCampaign,
-  useCampaignParticipation,
 } from "@/hooks/use-unified-data";
 import { TaskSubmissionDialog } from "@/components/campaign/TaskSubmissionDialog";
 
 import { CampaignActionButton } from "@/components/campaign/CampaignActionButton";
-import { DistributionMethod } from "@/lib/types/campaign";
 import { APICampaign } from "@/hooks/use-unified-data";
-import { StreakCard, MonthlyRaffleCard } from "@/components/streaks/StreakCard";
 
-import {
-  Trophy,
-  Zap,
-  Clock,
-  Users,
-  Gift,
-  Star,
-  Calendar,
-  Target,
-  CheckCircle,
-  PlayCircle,
-  Twitter,
-  Hash,
-  AtSign,
-  TrendingUp,
-  Coins,
-  Crown,
-  Award,
-  Shield,
-} from "lucide-react";
+import { Trophy, Zap, Clock, Users, Gift, User } from "lucide-react";
 
 // Real data is now fetched from unified hooks above
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("available");
   const [selectedCampaignForTasks, setSelectedCampaignForTasks] =
     useState<APICampaign | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const { isConnected, address } = useAccount();
   const {
@@ -70,20 +46,39 @@ export default function DashboardPage() {
 
   // Get real data from unified hooks
   const userStats = useUnifiedUserStats();
-  const { apiCampaigns: availableCampaigns, loading: campaignsLoading } =
-    useValidatedCampaigns("all");
-  const { leaderboard, loading: leaderboardLoading } = useUnifiedLeaderboard(
-    10,
-    0
+  const [availableCampaigns, setAvailableCampaigns] = useState<APICampaign[]>(
+    []
   );
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
+
+  // Fetch campaigns with refresh capability
+  const fetchCampaigns = useCallback(async () => {
+    try {
+      setCampaignsLoading(true);
+      const response = await fetch("/api/campaigns?status=all");
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableCampaigns(data.campaigns || []);
+      }
+    } catch (error) {
+      console.error("Error fetching campaigns:", error);
+    } finally {
+      setCampaignsLoading(false);
+    }
+  }, []);
+
+  // Initial fetch and refresh when trigger changes
+  useEffect(() => {
+    fetchCampaigns();
+  }, [fetchCampaigns, refreshTrigger]);
 
   const handleJoinCampaign = async (campaignId: string) => {
     try {
       const success = await joinCampaign(campaignId);
       if (success) {
-        // Optionally refresh the campaigns data
-        // You could call a refresh function here
+        // Refresh the campaigns data to update UI state
         console.log("Successfully joined campaign:", campaignId);
+        setRefreshTrigger((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Error joining campaign:", error);
@@ -131,30 +126,36 @@ export default function DashboardPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Quest Dashboard</h1>
+              <h1 className="text-3xl font-bold">Quests</h1>
               <p className="text-muted-foreground mt-2">
                 Participate in quests, earn rewards, and build your reputation
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-primary">
-                {userStats.isLoaded ? userStats.totalQP : "..."} QP
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Level {userStats.isLoaded ? userStats.level : "..."}
+            <div className="flex items-center gap-4">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/profile">
+                  <User className="w-4 h-4 mr-2" />
+                  My Profile
+                </Link>
+              </Button>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-primary">
+                  {userStats.isLoaded ? userStats.totalQP : "..."} QP
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Level {userStats.isLoaded ? userStats.level : "..."}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div>
+            <Tabs value="available">
               <TabsList className="mb-6">
                 <TabsTrigger value="available">Available Quests</TabsTrigger>
-                <TabsTrigger value="active">My Active Quests</TabsTrigger>
-                <TabsTrigger value="completed">Completed</TabsTrigger>
               </TabsList>
 
               <TabsContent value="available" className="space-y-6">
@@ -179,7 +180,7 @@ export default function DashboardPage() {
                         <h3 className="text-lg font-semibold mb-4">
                           Available Campaigns
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {availableCampaigns
                             .filter(
                               (c) =>
@@ -192,8 +193,17 @@ export default function DashboardPage() {
                                 key={campaign.id}
                                 className="overflow-hidden"
                               >
-                                <div className="h-48 bg-gradient-to-br from-purple-500 to-pink-500 relative">
-                                  <div className="absolute inset-0 bg-black/20" />
+                                <div className="h-48 relative">
+                                  {campaign.questBanner ? (
+                                    <img
+                                      src={campaign.questBanner}
+                                      alt={`${campaign.title} banner`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                                  )}
+                                  <div className="absolute inset-0 bg-black/40" />
 
                                   <div className="absolute top-4 right-4">
                                     <Badge className="bg-green-500">
@@ -237,47 +247,20 @@ export default function DashboardPage() {
                                         <Gift className="h-4 w-4 text-primary" />
                                         <span className="font-medium">
                                           {campaign.rewardAmount}{" "}
-                                          {campaign.rewardType}
+                                          {campaign.rewardType} + $0.02
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <Zap className="h-4 w-4 text-yellow-500" />
                                         <span className="font-medium">
-                                          {campaign.tasks?.[0]?.qpReward || 10}{" "}
+                                          {campaign.tasks
+                                            ?.filter((task) => task.enabled)
+                                            .reduce(
+                                              (total, task) =>
+                                                total + (task.qpReward || 0),
+                                              0
+                                            ) || 0}{" "}
                                           QP
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                      <div>
-                                        {campaign.distributionMethod ===
-                                        "lucky_draw"
-                                          ? `${(
-                                              campaign.rewardAmount /
-                                              (campaign.numberOfWinners || 1)
-                                            ).toFixed(2)} ${
-                                              campaign.rewardType
-                                            } per winner (${
-                                              campaign.numberOfWinners
-                                            } winners)`
-                                          : `${(
-                                              campaign.rewardAmount /
-                                              Math.max(
-                                                campaign.currentParticipants,
-                                                1
-                                              )
-                                            ).toFixed(2)} ${
-                                              campaign.rewardType
-                                            } per winner (all participants)`}
-                                      </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                      <div className="flex items-center gap-2">
-                                        <Shield className="h-3 w-3" />
-                                        <span>
-                                          Platform Guarantee: $0.02 USDC
                                         </span>
                                       </div>
                                     </div>
@@ -340,422 +323,10 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     )}
-
-                    {/* Unfunded/Pending Campaigns */}
-                    {availableCampaigns.some(
-                      (c) =>
-                        c.currentParticipants < c.maxParticipants &&
-                        (c.blockchainCampaignId === null ||
-                          c.blockchainCampaignId === undefined)
-                    ) && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">
-                          Pending Campaigns (Not Yet Funded)
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {availableCampaigns
-                            .filter(
-                              (c) =>
-                                c.currentParticipants < c.maxParticipants &&
-                                (c.blockchainCampaignId === null ||
-                                  c.blockchainCampaignId === undefined)
-                            )
-                            .map((campaign) => (
-                              <Card
-                                key={campaign.id}
-                                className="overflow-hidden opacity-60"
-                              >
-                                <div className="h-48 bg-gradient-to-br from-gray-500 to-gray-600 relative">
-                                  <div className="absolute inset-0 bg-black/30" />
-
-                                  <div className="absolute top-4 right-4">
-                                    <Badge className="bg-yellow-500 text-yellow-900">
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      Pending Funding
-                                    </Badge>
-                                  </div>
-                                  <div className="absolute bottom-4 left-4 text-white">
-                                    <h3 className="font-bold text-xl mb-1">
-                                      {campaign.title}
-                                    </h3>
-                                    <p className="text-sm opacity-90">
-                                      {campaign.description}
-                                    </p>
-                                  </div>
-                                  <div className="absolute -bottom-10 right-4">
-                                    <Avatar className="h-20 w-20 border-3 border-white shadow-lg">
-                                      <AvatarImage
-                                        src={
-                                          campaign.organizationLogo ||
-                                          "/placeholder-logo.png"
-                                        }
-                                      />
-                                      <AvatarFallback className="text-white bg-black/50 text-lg">
-                                        {campaign.organizationName?.charAt(0) ||
-                                          "O"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  </div>
-                                </div>
-
-                                <CardContent className="p-6">
-                                  <div className="space-y-4">
-                                    <div className="text-sm text-muted-foreground mb-2">
-                                      by {campaign.organizationName}
-                                    </div>
-
-                                    <Alert>
-                                      <Clock className="h-4 w-4" />
-                                      <AlertDescription>
-                                        This campaign is waiting for funding on
-                                        the blockchain. You can join once it's
-                                        funded.
-                                      </AlertDescription>
-                                    </Alert>
-
-                                    <div className="flex items-center justify-between text-sm">
-                                      <div className="flex items-center gap-1">
-                                        <Users className="h-3 w-3" />
-                                        {campaign.currentParticipants}/
-                                        {campaign.maxParticipants} joined
-                                      </div>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
-              </TabsContent>
-
-              <TabsContent value="active" className="space-y-6">
-                {availableCampaigns.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">
-                      No active quests yet
-                    </h3>
-                    <p className="text-muted-foreground mb-6">
-                      Join a campaign from the "Available Quests" tab to start
-                      participating!
-                    </p>
-                    <Button onClick={() => setActiveTab("available")}>
-                      Browse Available Quests
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4">
-                        Your Active Quests
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {availableCampaigns
-                          .filter((c) => c.currentParticipants > 0)
-                          .map((campaign) => (
-                            <Card key={campaign.id} className="overflow-hidden">
-                              <div className="h-32 bg-gradient-to-br from-blue-500 to-purple-500 relative">
-                                <div className="absolute inset-0 bg-black/20" />
-                                <div className="absolute top-3 right-3">
-                                  <Badge className="bg-green-500">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    {getTimeRemaining(
-                                      new Date(campaign.endDate)
-                                    )}
-                                  </Badge>
-                                </div>
-                                <div className="absolute bottom-3 left-3 text-white">
-                                  <h4 className="font-bold text-lg mb-1">
-                                    {campaign.title}
-                                  </h4>
-                                  <p className="text-sm opacity-90">
-                                    {campaign.organizationName}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <CardContent className="p-6">
-                                <div className="space-y-4">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <Target className="h-4 w-4 text-muted-foreground" />
-                                      <span>
-                                        {campaign.tasks?.filter(
-                                          (t) => t.enabled
-                                        ).length || 0}{" "}
-                                        Active Tasks
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Gift className="h-4 w-4 text-muted-foreground" />
-                                      <span>
-                                        {campaign.rewardAmount}{" "}
-                                        {campaign.rewardType}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <div className="text-sm font-medium">
-                                      Progress
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                        <div
-                                          className="bg-primary h-2 rounded-full"
-                                          style={{
-                                            width: `${
-                                              (campaign.tasks?.filter(
-                                                (t) => t.enabled
-                                              ).length || 0) > 0
-                                                ? 50
-                                                : 0
-                                            }%`,
-                                          }}
-                                        />
-                                      </div>
-                                      <span className="text-xs text-muted-foreground">
-                                        In Progress
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    {campaign.tasks
-                                      ?.filter((t) => t.enabled)
-                                      .slice(0, 2)
-                                      .map((task) => (
-                                        <div
-                                          key={task.id}
-                                          className="flex items-center justify-between p-2 bg-muted rounded text-sm"
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 border-2 border-muted-foreground rounded-full" />
-                                            <span className="font-medium">
-                                              {task.title ||
-                                                task.customTitle ||
-                                                `${task.type.replace(
-                                                  "_",
-                                                  " "
-                                                )} Task`}
-                                            </span>
-                                          </div>
-                                          <Badge
-                                            variant="outline"
-                                            className="text-xs"
-                                          >
-                                            {task.qpReward} QP
-                                          </Badge>
-                                        </div>
-                                      ))}
-
-                                    {(campaign.tasks?.filter((t) => t.enabled)
-                                      .length || 0) > 2 && (
-                                      <div className="text-xs text-muted-foreground text-center">
-                                        +
-                                        {(campaign.tasks?.filter(
-                                          (t) => t.enabled
-                                        ).length || 0) - 2}{" "}
-                                        more tasks
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <Button
-                                    onClick={() => {
-                                      setSelectedCampaignForTasks(campaign);
-                                      setTaskDialogOpen(true);
-                                    }}
-                                    className="w-full"
-                                    size="lg"
-                                  >
-                                    <PlayCircle className="w-4 h-4 mr-2" />
-                                    Continue Quest
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="completed">
-                <div className="text-center py-12">
-                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">
-                    No completed quests yet
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Complete your first quest to see your achievements here!
-                  </p>
-                </div>
               </TabsContent>
             </Tabs>
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Daily Streaks */}
-            <StreakCard />
-
-            {/* Monthly Raffle */}
-            <MonthlyRaffleCard />
-            {/* User Profile */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder-user.jpg" />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                  Profile
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {userStats.isLoaded ? userStats.totalQP : "..."}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total QP</div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-lg font-semibold">
-                      {userStats.isLoaded ? userStats.level : "..."}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Level</div>
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold">
-                      #
-                      {leaderboard.find((u) => u.walletAddress === address)
-                        ?.rank || "..."}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Rank</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-lg font-semibold">
-                      {userStats.completedQuests || 0}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Completed
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold">
-                      $
-                      {userStats.isLoaded
-                        ? userStats.totalEarnings.toFixed(2)
-                        : "..."}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Earned</div>
-                  </div>
-                </div>
-
-                <Progress
-                  value={
-                    userStats.isLoaded
-                      ? ((userStats.totalQP % 500) / 500) * 100
-                      : 0
-                  }
-                  className="h-2"
-                />
-                <div className="text-xs text-center text-muted-foreground">
-                  {userStats.isLoaded ? userStats.qpForNextLevel : "..."} QP to
-                  Level {userStats.isLoaded ? userStats.level + 1 : "..."}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Achievements */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5" />
-                  Achievements
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-6 text-muted-foreground">
-                  <Award className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Achievements coming soon!</p>
-                  <p className="text-xs mt-1">
-                    Complete quests to unlock achievements
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Leaderboard */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Leaderboard
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {leaderboardLoading ? (
-                  <div className="text-muted-foreground">
-                    Loading leaderboard...
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {leaderboard.slice(0, 5).map((user, index) => {
-                      const isCurrentUser = user.walletAddress === address;
-                      const rankIcon =
-                        index === 0
-                          ? "🥇"
-                          : index === 1
-                          ? "🥈"
-                          : index === 2
-                          ? "🥉"
-                          : "👤";
-
-                      return (
-                        <div
-                          key={user.walletAddress}
-                          className={`flex items-center justify-between ${
-                            isCurrentUser
-                              ? "bg-primary/10 p-2 rounded-lg border"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{rankIcon}</span>
-                            <div>
-                              <div
-                                className={`text-sm font-medium ${
-                                  isCurrentUser ? "text-primary" : ""
-                                }`}
-                              >
-                                {isCurrentUser ? "You" : user.displayName}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                #{user.rank}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-sm font-medium">
-                            {user.totalQP} QP
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

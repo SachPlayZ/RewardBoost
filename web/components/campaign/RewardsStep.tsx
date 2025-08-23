@@ -93,94 +93,6 @@ export function RewardsStep() {
         </p>
       </div>
 
-      {/* Reward Amount and Type */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Reward Pool
-          </CardTitle>
-          <CardDescription>
-            Configure the total reward amount and token type
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={control}
-            name="rewardConfig.amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Total Reward Amount *</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      placeholder="100"
-                      min={1}
-                      step="0.01"
-                      className="pl-10"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Total amount to be distributed among winners
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name="rewardConfig.type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reward Token *</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select token type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={RewardType.SEI}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-red-500 rounded-full" />
-                        SEI (Native Token)
-                        <Badge variant="outline" className="text-xs ml-2">
-                          Recommended
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value={RewardType.USDC}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-blue-500 rounded-full" />
-                        USDC
-                        <Badge variant="outline" className="text-xs ml-2">
-                          Also Available
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Choose the token for reward distribution
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </CardContent>
-      </Card>
-
       {/* Distribution Method */}
       <Card>
         <CardHeader>
@@ -291,45 +203,143 @@ export function RewardsStep() {
               </FormItem>
             )}
           />
-
-          {/* Lucky Draw Configuration */}
-          {watchedRewardConfig?.distributionMethod ===
-            DistributionMethod.LUCKY_DRAW && (
-            <div className="mt-6 p-4 border rounded-lg bg-muted/50">
-              <h4 className="font-medium mb-4">Lucky Draw Configuration</h4>
-              <FormField
-                control={control}
-                name="rewardConfig.numberOfWinners"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Trophy className="h-4 w-4" />
-                      Number of Winners *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="10"
-                        min={1}
-                        max={watchedMaxParticipants || 1000}
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      How many participants will receive rewards (max:{" "}
-                      {watchedMaxParticipants || 1000})
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Reward Amount and Type */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Reward Pool
+          </CardTitle>
+          <CardDescription>
+            Configure the total reward amount and token type
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={control}
+            name="rewardConfig.amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Total Reward Amount *</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      placeholder="100"
+                      min={1}
+                      step="0.01"
+                      className="pl-10"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  Total amount to be distributed among winners
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="rewardConfig.type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reward Token *</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select token type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={RewardType.SEI}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-red-500 rounded-full" />
+                        SEI (Native Token)
+                        <Badge variant="outline" className="text-xs ml-2">
+                          Recommended
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value={RewardType.USDC}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full" />
+                        USDC
+                        <Badge variant="outline" className="text-xs ml-2">
+                          Also Available
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose the token for reward distribution
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Lucky Draw Configuration */}
+      {watchedRewardConfig?.distributionMethod ===
+        DistributionMethod.LUCKY_DRAW && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5" />
+              Lucky Draw Configuration
+            </CardTitle>
+            <CardDescription>
+              Configure the number of winners for the lucky draw
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={control}
+              name="rewardConfig.numberOfWinners"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4" />
+                    Number of Winners *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="10"
+                      min={1}
+                      max={watchedMaxParticipants || 1000}
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    How many participants will receive rewards (max:{" "}
+                    {watchedMaxParticipants || 1000})
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Reward Calculation Summary */}
       <Card>

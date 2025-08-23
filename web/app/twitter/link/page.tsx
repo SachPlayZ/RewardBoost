@@ -19,8 +19,6 @@ function TwitterLinkContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [twitterUsername, setTwitterUsername] = useState("");
-  const [twitterName, setTwitterName] = useState("");
-  const [twitterProfileImage, setTwitterProfileImage] = useState("");
 
   const walletAddress = address || searchParams.get("walletAddress") || "";
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -42,8 +40,6 @@ function TwitterLinkContent() {
         if (data.linked) {
           setSuccess(true);
           setTwitterUsername(data.twitterUsername);
-          setTwitterName(data.twitterName);
-          setTwitterProfileImage(data.twitterProfileImage);
         }
       }
     } catch (err) {
@@ -76,10 +72,6 @@ function TwitterLinkContent() {
         body: JSON.stringify({
           walletAddress,
           twitterUsername: twitterUsername.trim(),
-          twitterName: twitterName.trim() || twitterUsername.trim(),
-          twitterProfileImage:
-            twitterProfileImage.trim() ||
-            `https://unavatar.io/twitter/${twitterUsername.trim()}`,
         }),
       });
 
@@ -113,16 +105,12 @@ function TwitterLinkContent() {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <div className="flex items-center justify-center space-x-3">
-              {twitterProfileImage && (
-                <img
-                  src={twitterProfileImage}
-                  alt="Profile"
-                  className="w-12 h-12 rounded-full border-2 border-green-400"
-                />
-              )}
               <div className="text-left">
-                <p className="text-lg font-medium text-white">{twitterName}</p>
-                <p className="text-sm text-gray-400">@{twitterUsername}</p>
+                <p className="text-lg font-medium text-white">
+                  {twitterUsername.startsWith("@")
+                    ? twitterUsername
+                    : `@${twitterUsername}`}
+                </p>
               </div>
             </div>
             <p className="text-gray-300">
@@ -180,39 +168,6 @@ function TwitterLinkContent() {
             </div>
             <p className="text-xs text-gray-400">
               Enter your Twitter username (without @ symbol)
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="twitterName" className="text-gray-300">
-              Display Name (optional)
-            </Label>
-            <Input
-              id="twitterName"
-              type="text"
-              placeholder="Your display name"
-              value={twitterName}
-              onChange={(e) => setTwitterName(e.target.value)}
-              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="twitterProfileImage" className="text-gray-300">
-              Profile Image URL (optional)
-            </Label>
-            <Input
-              id="twitterProfileImage"
-              type="url"
-              placeholder="https://example.com/profile.jpg"
-              value={twitterProfileImage}
-              onChange={(e) => setTwitterProfileImage(e.target.value)}
-              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              disabled={loading}
-            />
-            <p className="text-xs text-gray-400">
-              Leave empty to use automatic profile image from unavatar.io
             </p>
           </div>
 

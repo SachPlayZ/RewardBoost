@@ -153,36 +153,21 @@ export async function generateTweet(
     const client = initializeRivalzClient();
     
     // The perfect prompt as specified by the user
-    let prompt = `You are a creative Web3 social media user. Your task is to write a **unique tweet** about **${campaignGoal}** using **{Knowledge Base}** and **${campaignDetails}**.
+    let prompt = `You are a creative Web3 social media user. Write a unique tweet about ${campaignGoal} using the knowledge base and ${campaignDetails}.
 
-Each tweet must feel **human and natural**, not robotic, and must be different from others by varying tone, style, and structure.
+Each tweet must be different and should:
+Randomly pick a tone (excited, casual, professional, witty, curious, urgent, optimistic, bold, playful, futuristic).
+Optionally add (0-3) emojis that match the campaign goal
+Begin differently each time (use a question, fact, bold statement, short story, FOMO/urgency or benefit).
+Calls-to-action (endings) → Rotate between: call-to-action like "Join the waitlist", "Spread the word", "Retweet if you agree", "Don't miss out", "Tag a friend", "Check it out now" or "Be early" based on the campaign goal
+Randomly place the link if any needed at the start, middle, or end
 
-Guidelines to follow for each tweet:
-
-🎭 **Tone** → Randomly choose one: *excited, casual, professional, witty, curious, urgent, optimistic, bold, playful, futuristic.*
-
-😀 **Emotions & Emojis** → Optionally add 0–3 emojis chosen from these sets:
-🔥🚀✨ | 🌍💡💧 | 🎯💎📈 | 💬🤝⚡ | 💎👀🎉
-
-🪄 **Opening Style (Hook)** → Start with one of the following at random:
-
-* Bold statement
-* Surprising fact/statistic
-* Rhetorical or direct question
-* Short story or scenario
-* Benefit-driven opener
-* Myth-busting claim
-* FOMO/urgency trigger
-
-📣 **Call-to-Action (Ending)** → Conclude with one at random:
-"Join the waitlist" | "Retweet if you agree" | "Don't miss out" | "Be early" |
-"Tag a friend" | "Check it out now" | "Try the demo" | "Spread the word"
-
-🌀 **Structure Variability** →
-
-* Randomly place the campaign link at the start, middle, or end.
-* Mix sentence length (short punchy vs longer informative).
-* Vary emoji count (0–3).`;
+Requirements:
+Add account mentions: ${accountsToMention && accountsToMention.length > 0 ? accountsToMention.map(account => `@${account}`).join(' ') : 'None'}
+Keep between 230 to 280 characters.
+Always include hashtags at the end: ${hashtags.map(tag => `#${tag}`).join(' ')} 
+Ensure no two tweets are more than 50% similar in wording.
+Make it sound human, natural, and engaging, not robotic.`;
 
     // Add language requirement if specified
     if (language && language !== 'English') {
@@ -201,9 +186,9 @@ Guidelines to follow for each tweet:
 
     prompt += `\n\n✅ **Final Requirements**:
 
-* Tweet must be **under 280 characters**.
+* Tweet must be between 230-280 characters.
 * Always include these hashtags: **${hashtags.map(tag => `#${tag}`).join(' ')}**.
-* Each tweet must differ in at least 40% wording from previous ones (to avoid duplication).
+* Each tweet must differ in at least 50% wording from previous ones (to avoid duplication).
 * Must be engaging, authentic, and shareable.`;
     
     const conversation = await client.createChatSession(knowledgeBaseId, prompt);

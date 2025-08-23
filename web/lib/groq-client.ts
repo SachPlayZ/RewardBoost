@@ -36,33 +36,21 @@ export async function generateTweetWithGroq(
     const client = initializeGroqClient();
     
     // Your perfect prompt adapted for Groq
-    const systemPrompt = `You are a creative Web3 social media expert. Your task is to write a **unique tweet** using the provided knowledge base context.
+    const systemPrompt = `You are a creative Web3 social media user. Write a unique tweet about the campaign goal using the knowledge base and campaign details.
 
-Guidelines to follow:
+Each tweet must be different and should:
+Randomly pick a tone (excited, casual, professional, witty, curious, urgent, optimistic, bold, playful, futuristic).
+Optionally add (0-3) emojis that match the campaign goal
+Begin differently each time (use a question, fact, bold statement, short story, FOMO/urgency or benefit).
+Calls-to-action (endings) → Rotate between: call-to-action like "Join the waitlist", "Spread the word", "Retweet if you agree", "Don't miss out", "Tag a friend", "Check it out now" or "Be early" based on the campaign goal
+Randomly place the link if any needed at the start, middle, or end
 
-🎭 **Tone** → Choose one: *excited, casual, professional, witty, curious, urgent, optimistic, bold, playful, futuristic.*
-
-😀 **Emotions & Emojis** → Add 0–3 emojis from these sets:
-🔥🚀✨ | 🌍💡💧 | 🎯💎📈 | 💬🤝⚡ | 💎👀🎉
-
-🪄 **Opening Style (Hook)** → Start with one of:
-• Bold statement
-• Surprising fact/statistic  
-• Rhetorical or direct question
-• Short story or scenario
-• Benefit-driven opener
-• Myth-busting claim
-• FOMO/urgency trigger
-
-📣 **Call-to-Action (Ending)** → Conclude with one:
-"Join the waitlist" | "Retweet if you agree" | "Don't miss out" | "Be early" |
-"Tag a friend" | "Check it out now" | "Try the demo" | "Spread the word"
-
-✅ **Requirements**:
-• Tweet must be **under 280 characters**
-• Must be engaging, authentic, and shareable
-• Use knowledge base context to make it informative
-• Include ALL specified hashtags: ${hashtags.map(tag => `#${tag}`).join(' ')}`;
+Requirements:
+Add account mentions as specified in the user prompt
+Keep between 230 to 280 characters.
+Always include hashtags at the end as specified
+Ensure no two tweets are more than 50% similar in wording.
+Make it sound human, natural, and engaging, not robotic.`;
     
     let userPrompt = `**Campaign Goal**: ${campaignGoal}
 
@@ -71,7 +59,9 @@ Guidelines to follow:
 **Knowledge Base Context**:
 ${knowledgeBaseText}
 
-**Required Hashtags**: ${hashtags.map(tag => `#${tag}`).join(' ')}`;
+**Required Hashtags**: ${hashtags.map(tag => `#${tag}`).join(' ')}
+
+**Accounts to Mention**: ${accountsToMention && accountsToMention.length > 0 ? accountsToMention.map(account => `@${account}`).join(' ') : 'None'}`;
 
     // Add language requirement if specified
     if (language && language !== 'English') {
@@ -113,9 +103,18 @@ ${knowledgeBaseText}
     const hashtagString = hashtags.map(tag => `#${tag}`).join(' ');
     if (!finalTweet.includes(hashtagString)) {
       // Add hashtags if they don't fit naturally
-      if (finalTweet.length + hashtagString.length + 1 < 280) {
+      if (finalTweet.length + hashtagString.length + 1 <= 280) {
         finalTweet = `${finalTweet} ${hashtagString}`;
       }
+    }
+    
+    // Ensure tweet is within the 230-280 character range
+    if (finalTweet.length < 230) {
+      console.log('⚠️ Tweet is too short, adding more content if possible');
+    }
+    if (finalTweet.length > 280) {
+      console.log('⚠️ Tweet exceeds 280 characters, truncating');
+      finalTweet = finalTweet.substring(0, 277) + '...';
     }
     
     return finalTweet;
@@ -209,5 +208,245 @@ export async function testGroqConnection(): Promise<{ success: boolean; error?: 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
     };
+  }
+}
+
+// Generate campaign content (title and description) using Groq
+export async function generateCampaignContentWithGroq(
+  prompt: string,
+  category: string,
+  tone: string = 'casual',
+  language: string = 'English'
+): Promise<{ title: string; description: string }> {
+  try {
+    console.log('🤖 Generating campaign content with Groq...');
+    console.log('📝 Prompt:', prompt);
+    console.log('🏷️ Category:', category);
+    console.log('🎭 Tone:', tone);
+    console.log('🌍 Language:', language);
+    
+    const client = initializeGroqClient();
+    
+    const systemPrompt = `You are a creative Web3 marketing expert specializing in creating engaging quest campaigns. Your task is to generate a compelling campaign title and description based on the user's prompt and category.
+
+Guidelines to follow:
+
+🎯 **Campaign Title**:
+• Must be catchy and memorable (max 30 characters)
+• Should clearly communicate the campaign's purpose
+• Use action words and engaging language
+• Avoid generic terms, be specific and unique
+
+📝 **Campaign Description**:
+• Must be compelling and informative (max 300 characters)
+• Explain what participants will do and what they'll gain
+• Include the value proposition clearly
+• Use engaging language that motivates participation
+• Should align with the selected category and tone
+
+🎭 **Tone Guidelines**:
+• Casual: Friendly, approachable, uses everyday language
+• Professional: Business-like, formal, authoritative
+• Engaging: Exciting, energetic, creates urgency
+• Friendly: Warm, welcoming, community-focused
+• Creative: Innovative, artistic, outside-the-box thinking
+
+🏷️ **Category Alignment**:
+• Ensure the content fits the selected category
+• Use relevant terminology and concepts
+• Align with category-specific expectations
+
+✅ **Requirements**:
+• Title: Max 30 characters, engaging and clear
+• Description: Max 300 characters, compelling and informative
+• Must be original and not generic
+• Should inspire action and participation
+• Language should match the specified tone
+• Content should be appropriate for the Web3/blockchain space`;
+    
+    const userPrompt = `**User Prompt**: ${prompt}
+
+**Category**: ${category}
+
+**Tone**: ${tone}
+
+**Language**: ${language}
+
+Please generate a compelling campaign title and description that:
+1. Addresses the user's prompt
+2. Fits the selected category
+3. Matches the specified tone
+4. Is written in the specified language
+5. Is engaging and motivates participation
+
+Generate exactly one title and one description that meet all requirements.`;
+
+    const response = await client.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.8,
+      max_tokens: 500,
+    });
+
+    const content = response.choices[0]?.message?.content?.trim();
+    
+    if (!content) {
+      throw new Error('No campaign content generated by Groq');
+    }
+    
+    console.log('✅ Campaign content generated successfully:', content);
+    
+    // Parse the response to extract title and description
+    // The AI should return them in a structured format, but we'll handle parsing
+    const lines = content.split('\n').filter(line => line.trim());
+    
+    let title = '';
+    let description = '';
+    
+    // Try to extract title and description from the response
+    for (const line of lines) {
+      if (line.toLowerCase().includes('**campaign title**:') || line.toLowerCase().includes('**campaign title**：')) {
+        title = line.replace(/^\*\*Campaign Title\*\*:\s*/i, '').trim();
+      } else if (line.toLowerCase().includes('**campaign description**:') || line.toLowerCase().includes('**campaign description**：')) {
+        description = line.replace(/^\*\*Campaign Description\*\*:\s*/i, '').trim();
+      }
+    }
+    
+    // If parsing failed, try to split by line breaks or other indicators
+    if (!title || !description) {
+      if (lines.length >= 2) {
+        title = lines[0].trim();
+        description = lines.slice(1).join(' ').trim();
+      } else {
+        // Fallback: split the content in half
+        const midPoint = Math.floor(content.length / 2);
+        title = content.substring(0, midPoint).trim();
+        description = content.substring(midPoint).trim();
+      }
+    }
+    
+    // Clean up the extracted content - remove any remaining markdown formatting
+    title = title.replace(/^["']|["']$/g, '').replace(/^\*\*.*?\*\*:\s*/i, '').trim();
+    description = description.replace(/^["']|["']$/g, '').replace(/^\*\*.*?\*\*:\s*/i, '').trim();
+    
+    // Ensure we have valid content
+    if (!title || !description) {
+      throw new Error('Failed to parse title and description from AI response');
+    }
+    
+    return { title, description };
+    
+  } catch (error) {
+    console.error('❌ Error generating campaign content with Groq:', error);
+    
+    // Log more detailed error information
+    if (error && typeof error === 'object') {
+      console.error('Error details:', {
+        name: (error as any).name,
+        message: (error as any).message,
+        status: (error as any).status,
+        response: (error as any).response?.data,
+      });
+    }
+    
+    throw new Error(`Failed to generate campaign content with Groq: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Beautify campaign description using Groq
+export async function beautifyDescriptionWithGroq(
+  description: string
+): Promise<string> {
+  try {
+    console.log('✨ Beautifying description with Groq...');
+    console.log('📝 Original description:', description);
+    
+    const client = initializeGroqClient();
+    
+    const systemPrompt = `You are a creative Web3 marketing expert specializing in writing compelling campaign descriptions. Your task is to beautify and enhance the given campaign description while keeping the core message intact.
+
+Guidelines to follow:
+
+🎯 **Enhancement Goals**:
+• Make the language more engaging and compelling
+• Improve readability and flow
+• Add emotional appeal and excitement
+• Use active voice and action-oriented language
+• Maintain the original meaning and purpose
+• Keep it under 500 characters
+
+✨ **Writing Style**:
+• Use vivid, descriptive language
+• Include power words that create urgency
+• Make it sound exciting and valuable
+• Use clear, concise sentences
+• Avoid jargon unless necessary
+• Make it sound human and authentic
+
+🎨 **Structure**:
+• Start with a compelling hook
+• Clearly explain the benefits
+• Include a call-to-action if appropriate
+• End with motivation or excitement
+
+✅ **Requirements**:
+• Must be under 500 characters
+• Should be more engaging than the original
+• Must preserve the core message
+• Should sound professional yet exciting
+• Must be appropriate for Web3/blockchain campaigns`;
+    
+    const userPrompt = `**Original Description**:
+"${description}"
+
+Please beautify and enhance this campaign description to make it more engaging, compelling, and exciting while keeping the core message intact. Make it sound more professional and appealing to potential participants.
+
+Return ONLY the beautified description without any prefixes, labels, or formatting.`;
+    
+    const response = await client.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 400,
+    });
+
+    const beautifiedDescription = response.choices[0]?.message?.content?.trim();
+    
+    if (!beautifiedDescription) {
+      throw new Error('No beautified description generated by Groq');
+    }
+    
+    console.log('✅ Description beautified successfully:', beautifiedDescription);
+    
+    // Clean up the response and ensure it's within character limit
+    let finalDescription = beautifiedDescription.replace(/^["']|["']$/g, '').trim();
+    
+    // If it's too long, truncate it
+    if (finalDescription.length > 500) {
+      finalDescription = finalDescription.substring(0, 497) + '...';
+    }
+    
+    return finalDescription;
+    
+  } catch (error) {
+    console.error('❌ Error beautifying description with Groq:', error);
+    
+    // Log more detailed error information
+    if (error && typeof error === 'object') {
+      console.error('Error details:', {
+        name: (error as any).name,
+        message: (error as any).message,
+        status: (error as any).status,
+        response: (error as any).response?.data,
+      });
+    }
+    
+    throw new Error(`Failed to beautify description with Groq: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

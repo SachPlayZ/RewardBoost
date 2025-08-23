@@ -45,6 +45,18 @@ export function KnowledgeBaseStep() {
   const [statusChecking, setStatusChecking] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Initialize knowledge base with default values if enabled but not properly initialized
+  React.useEffect(() => {
+    if (knowledgeBase?.enabled && !knowledgeBase.inputMethod) {
+      setValue("knowledgeBase", {
+        ...knowledgeBase,
+        inputMethod: "text", // Default to text since it's more reliable
+        provider: "groq", // Default to groq since rivalz is down
+        manualText: knowledgeBase.manualText || "",
+      });
+    }
+  }, [knowledgeBase?.enabled, knowledgeBase?.inputMethod, setValue]);
+
   const handleToggleKnowledgeBase = (enabled: boolean) => {
     setValue("knowledgeBase", {
       enabled,

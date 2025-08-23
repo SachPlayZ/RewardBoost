@@ -117,7 +117,7 @@ Visit `http://localhost:3000` to see the application.
 
 ### 2. Quest Configuration
 
-- **Timeline**: Start/end dates (max 7-day duration)
+- **Timeline**: Start/end dates (10 minutes minimum, 7 days maximum duration)
 - **Participation**: Maximum participant limit (500-1000 recommended)
 - **Quest Steps**: Detailed task instructions with completion criteria
 - **XP Rewards**: Experience points for each completed step

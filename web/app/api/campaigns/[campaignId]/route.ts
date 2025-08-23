@@ -98,6 +98,29 @@ export async function PATCH(
       });
     }
 
+    // Handle ending campaign
+    if (body.action === "end") {
+      const { transactionHash } = body;
+      
+      const campaign = await prisma.campaign.update({
+        where: { id: campaignId },
+        data: { 
+          status: "ended",
+          blockchainTxHash: transactionHash || undefined,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Campaign ended successfully",
+        campaign: {
+          id: campaign.id,
+          status: campaign.status,
+          blockchainTxHash: campaign.blockchainTxHash,
+        },
+      });
+    }
+
     return NextResponse.json(
       { error: "Invalid action" },
       { status: 400 }

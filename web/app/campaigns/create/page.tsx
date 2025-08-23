@@ -39,6 +39,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Target,
 } from "lucide-react";
 import { BasicInfoStep } from "@/components/campaign/BasicInfoStep";
 import { QuestConfigStep } from "@/components/campaign/QuestConfigStep";
@@ -120,7 +121,10 @@ export default function CreateCampaignPage() {
         },
       ],
       knowledgeBase: {
-        enabled: false,
+        enabled: true,
+        inputMethod: "text",
+        provider: "groq",
+        manualText: "",
       },
       rewardConfig: {
         amount: 2,
@@ -290,21 +294,11 @@ export default function CreateCampaignPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Create Campaign</h1>
-              <p className="text-muted-foreground mt-2">
-                Set up your quest campaign with rewards and tasks
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowAIPanel(!showAIPanel)}
-              className="gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              AI Assistant
-            </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Create Campaign</h1>
+            <p className="text-muted-foreground mt-2">
+              Set up your quest campaign with rewards and tasks
+            </p>
           </div>
         </div>
 
@@ -409,106 +403,222 @@ export default function CreateCampaignPage() {
             </FormProvider>
           </div>
 
-          {/* Sidebar - Campaign Summary */}
+          {/* Sidebar - Campaign Summary or Tips for Success */}
           <div className="lg:col-span-1">
             <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle className="text-lg">Campaign Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Title
-                  </div>
-                  <div className="font-medium truncate">
-                    {watchedValues.title || "Untitled Campaign"}
-                  </div>
-                </div>
+              {currentStep === 3 ? (
+                // Campaign Summary for Rewards step
+                <>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Campaign Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Title
+                      </div>
+                      <div className="font-medium truncate">
+                        {watchedValues.title || "Untitled Campaign"}
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Start Date & Time (UTC)
-                  </div>
-                  <div className="font-medium">
-                    {watchedValues.startDate ? (
-                      <>{format(watchedValues.startDate, "PPP p")}</>
-                    ) : (
-                      "Not set"
-                    )}
-                  </div>
-                </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Start Date & Time (UTC)
+                      </div>
+                      <div className="font-medium">
+                        {watchedValues.startDate ? (
+                          <>{format(watchedValues.startDate, "PPP p")}</>
+                        ) : (
+                          "Not set"
+                        )}
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    End Date & Time (UTC)
-                  </div>
-                  <div className="font-medium">
-                    {watchedValues.endDate ? (
-                      <>{format(watchedValues.endDate, "PPP p")}</>
-                    ) : (
-                      "Not set"
-                    )}
-                  </div>
-                </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        End Date & Time (UTC)
+                      </div>
+                      <div className="font-medium">
+                        {watchedValues.endDate ? (
+                          <>{format(watchedValues.endDate, "PPP p")}</>
+                        ) : (
+                          "Not set"
+                        )}
+                      </div>
+                    </div>
 
-                <Separator />
+                    <Separator />
 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Reward Pool
-                  </div>
-                  <div className="font-medium">
-                    ${watchedValues.rewardConfig?.amount || 0}{" "}
-                    {watchedValues.rewardConfig?.type || "USDC"}
-                  </div>
-                </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Reward Pool
+                      </div>
+                      <div className="font-medium">
+                        ${watchedValues.rewardConfig?.amount || 0}{" "}
+                        {watchedValues.rewardConfig?.type || "USDC"}
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Distribution
-                  </div>
-                  <Badge variant="secondary">
-                    {watchedValues.rewardConfig?.distributionMethod ===
-                    DistributionMethod.LUCKY_DRAW
-                      ? "Lucky Draw"
-                      : "Equal Split"}
-                  </Badge>
-                </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Distribution
+                      </div>
+                      <Badge variant="secondary">
+                        {watchedValues.rewardConfig?.distributionMethod ===
+                        DistributionMethod.LUCKY_DRAW
+                          ? "Lucky Draw"
+                          : "Equal Split"}
+                      </Badge>
+                    </div>
 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Max Participants
-                  </div>
-                  <div className="font-medium flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {watchedValues.maxParticipants || 0}
-                  </div>
-                </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Max Participants
+                      </div>
+                      <div className="font-medium flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {watchedValues.maxParticipants || 0}
+                      </div>
+                    </div>
 
-                <Separator />
+                    <Separator />
 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Total Deposit Required
-                  </div>
-                  <div className="font-bold text-lg">
-                    {
-                      getDepositBreakdown(
-                        watchedValues.rewardConfig?.amount || 0,
-                        watchedValues.rewardConfig?.type || RewardType.USDC
-                      ).displayText
-                    }
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Platform fee:{" "}
-                    {calculatePlatformFee(
-                      watchedValues.rewardConfig?.amount || 0
-                    )}{" "}
-                    {watchedValues.rewardConfig?.type || RewardType.USDC} (
-                    {PLATFORM_FEE_PERCENTAGE}% of reward amount)
-                  </div>
-                </div>
-              </CardContent>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Total Deposit Required
+                      </div>
+                      <div className="font-bold text-lg">
+                        {
+                          getDepositBreakdown(
+                            watchedValues.rewardConfig?.amount || 0,
+                            watchedValues.rewardConfig?.type || RewardType.USDC
+                          ).displayText
+                        }
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Platform fee:{" "}
+                        {calculatePlatformFee(
+                          watchedValues.rewardConfig?.amount || 0
+                        )}{" "}
+                        {watchedValues.rewardConfig?.type || RewardType.USDC} (
+                        {PLATFORM_FEE_PERCENTAGE}% of reward amount)
+                      </div>
+                    </div>
+                  </CardContent>
+                </>
+              ) : (
+                // Tips for Success for other steps
+                <>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Tips for Success</CardTitle>
+                    <CardDescription>
+                      Follow these proven strategies to create engaging
+                      campaigns
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                          <Target className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">
+                            Clear Objectives
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Define specific, measurable goals for your campaign
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-green-100 dark:bg-blue-900/20">
+                          <Users className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">
+                            Target Audience
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Understand who you're trying to reach and engage
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
+                          <Gift className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">
+                            Appropriate Rewards
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Set realistic reward amounts that motivate
+                            participation
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/20">
+                          <Calendar className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">
+                            Timing Matters
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Choose optimal start/end dates for maximum
+                            engagement
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
+                          <Zap className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">
+                            Simple Tasks
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Break complex requirements into easy-to-complete
+                            steps
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="text-center">
+                      <div className="p-3 rounded-lg bg-gradient-to-r  from-purple-900/20 to-pink-900/20">
+                        <Sparkles className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                        <div className="font-medium text-sm mb-1">
+                          AI Assistant Ready
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-3">
+                          Click the AI Assistant button to generate compelling
+                          campaign titles and descriptions
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAIPanel(true)}
+                          className="gap-2 w-full"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Assistant
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </>
+              )}
             </Card>
           </div>
         </div>
@@ -521,6 +631,23 @@ export default function CreateCampaignPage() {
             onApplySuggestion={(suggestions) => {
               // Apply AI suggestions to form
               console.log("Applying AI suggestions:", suggestions);
+
+              // Update the form with AI-generated content
+              if (suggestions.title) {
+                methods.setValue("title", suggestions.title);
+              }
+              if (suggestions.description) {
+                methods.setValue("description", suggestions.description);
+              }
+
+              // Trigger form validation and update
+              methods.trigger(["title", "description"]);
+
+              // Show success message
+              console.log("✅ AI-generated content applied successfully!");
+
+              // Close the AI panel
+              setShowAIPanel(false);
             }}
           />
         )}

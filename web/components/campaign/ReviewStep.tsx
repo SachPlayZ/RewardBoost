@@ -372,13 +372,31 @@ export function ReviewStep({ data }: ReviewStepProps) {
                       {task.hashtags && task.hashtags.length > 0 && (
                         <div className="flex items-center gap-2">
                           <Hash className="h-3 w-3" />
-                          <span>Hashtags: {task.hashtags.join(", ")}</span>
+                          <span>
+                            Hashtags:{" "}
+                            {task.hashtags
+                              .map((hashtag) =>
+                                hashtag.startsWith("#")
+                                  ? hashtag
+                                  : `#${hashtag}`
+                              )
+                              .join(", ")}
+                          </span>
                         </div>
                       )}
                       {task.accountsToTag && task.accountsToTag.length > 0 && (
                         <div className="flex items-center gap-2">
                           <AtSign className="h-3 w-3" />
-                          <span>Tags: {task.accountsToTag.join(", ")}</span>
+                          <span>
+                            Tags:{" "}
+                            {task.accountsToTag
+                              .map((account) =>
+                                account.startsWith("@")
+                                  ? account
+                                  : `@${account}`
+                              )
+                              .join(", ")}
+                          </span>
                         </div>
                       )}
                     </div>

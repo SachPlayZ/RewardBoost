@@ -34,6 +34,7 @@ import {
   Loader2,
   RefreshCw,
   Copy,
+  Pencil,
 } from "lucide-react";
 
 interface Task {
@@ -101,11 +102,12 @@ export function TaskSubmissionDialog({
   );
   const [postLink, setPostLink] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showTweetGenerator, setShowTweetGenerator] = useState(false);
+  const [showTweetGenerator, setShowTweetGenerator] = useState(true);
   const [tweetContent, setTweetContent] = useState("");
   const [tweetLanguage, setTweetLanguage] = useState("English");
-  const [showIntentCard, setShowIntentCard] = useState(false);
-  const [twitterIntentUrl, setTwitterIntentUrl] = useState("");
+  const [savedTweetPreview, setSavedTweetPreview] = useState<string>("");
+  const [showSavedTweet, setShowSavedTweet] = useState(false);
+  const [isSubmittingAll, setIsSubmittingAll] = useState(false);
 
   // Load existing submissions and check Twitter auth
   useEffect(() => {
@@ -115,11 +117,11 @@ export function TaskSubmissionDialog({
     }
   }, [open, address, campaignId]);
 
-  // Reset intent card when dialog opens/closes
+  // Reset saved tweet preview when dialog opens/closes
   useEffect(() => {
     if (!open) {
-      setShowIntentCard(false);
-      setTwitterIntentUrl("");
+      setShowSavedTweet(false);
+      setSavedTweetPreview("");
     }
   }, [open]);
 
@@ -134,6 +136,31 @@ export function TaskSubmissionDialog({
       return () => clearTimeout(timer);
     }
   }, [open, address]);
+
+  // Global loading overlay that covers entire screen
+  if (open && (isSubmittingAll || loading)) {
+    return (
+      <div className="fixed inset-0 bg-gray-900/95 backdrop-blur-sm z-[9999] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-20 h-20 animate-spin text-orange-500 mx-auto mb-6" />
+          <h3 className="text-2xl font-semibold text-white mb-3">
+            {isSubmittingAll
+              ? "Submitting All Tasks"
+              : currentStep === "auth"
+              ? "Redirecting to Twitter..."
+              : "Processing..."}
+          </h3>
+          <p className="text-gray-300 text-lg">
+            {isSubmittingAll
+              ? "Please wait while we process your submissions..."
+              : currentStep === "auth"
+              ? "Please wait while we redirect you to Twitter..."
+              : "Please wait while we process your request..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const checkTwitterAuth = async () => {
     if (!address) return;
@@ -415,6 +442,7 @@ export function TaskSubmissionDialog({
       setLoading(true);
       setError(null);
       setSuccess(null);
+      setIsSubmittingAll(true); // Set submitting state
 
       // Validate post URL if we have any post tasks
       const hasPostTasks = enabledTasks.some((task) => task.type === "x_post");
@@ -576,6 +604,7 @@ export function TaskSubmissionDialog({
       });
     } finally {
       setLoading(false);
+      setIsSubmittingAll(false); // Reset submitting state
     }
   };
 
@@ -734,13 +763,25 @@ export function TaskSubmissionDialog({
       return;
     }
 
-    const encodedTweet = encodeURIComponent(tweetContent.trim());
+    // Save the current tweet as a preview
+    const savedTweet = tweetContent.trim();
+    setSavedTweetPreview(savedTweet);
+    setShowSavedTweet(true);
+
+    // Hide the tweet generator and show the preview
+    setShowTweetGenerator(false);
+
+    // Create Twitter intent URL and open in new tab
+    const encodedTweet = encodeURIComponent(savedTweet);
     const intentUrl = `https://twitter.com/intent/tweet?text=${encodedTweet}`;
-    setTwitterIntentUrl(intentUrl);
-    setShowIntentCard(true);
+
+    // Open Twitter in new tab
+    window.open(intentUrl, "_blank", "width=600,height=700");
+
+    // Show success toast
     toast({
-      title: "Twitter Intent Ready",
-      description: "Click the link below to post on Twitter",
+      title: "Tweet Saved & Twitter Opened",
+      description: "Your tweet has been saved and Twitter is ready for posting",
     });
   };
 
@@ -768,7 +809,16 @@ export function TaskSubmissionDialog({
   // Authentication Step
   if (currentStep === "auth") {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog
+        open={open}
+        onOpenChange={(newOpen) => {
+          // Prevent closing while loading
+          if (loading) {
+            return;
+          }
+          onOpenChange(newOpen);
+        }}
+      >
         <DialogContent className="max-w-md bg-gray-900 border-gray-700 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-orange-400">
@@ -818,7 +868,9 @@ export function TaskSubmissionDialog({
                   </p>
                   {twitterAuth.name && twitterAuth.username && (
                     <p className="text-sm text-gray-300">
-                      @{twitterAuth.username}
+                      {twitterAuth.username.startsWith("@")
+                        ? twitterAuth.username
+                        : `@${twitterAuth.username}`}
                     </p>
                   )}
                   {twitterAuth.id && (
@@ -848,8 +900,17 @@ export function TaskSubmissionDialog({
                   size="lg"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
                 >
-                  <Twitter className="w-4 h-4 mr-2" />
-                  {loading ? "Redirecting..." : "Link Twitter Account"}
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Redirecting...
+                    </>
+                  ) : (
+                    <>
+                      <Twitter className="w-4 h-4 mr-2" />
+                      Link Twitter Account
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -861,7 +922,16 @@ export function TaskSubmissionDialog({
 
   // Tasks Step
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        // Prevent closing while submitting tasks
+        if (isSubmittingAll || loading) {
+          return;
+        }
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700 text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-orange-400">
@@ -889,7 +959,11 @@ export function TaskSubmissionDialog({
                 <p className="text-sm font-medium text-white">
                   {twitterAuth.name || twitterAuth.username}
                 </p>
-                <p className="text-xs text-gray-400">@{twitterAuth.username}</p>
+                <p className="text-xs text-gray-400">
+                  {twitterAuth.username.startsWith("@")
+                    ? twitterAuth.username
+                    : `@${twitterAuth.username}`}
+                </p>
               </div>
               <div className="flex items-center gap-1 text-green-400">
                 <CheckCircle className="w-4 h-4" />
@@ -925,7 +999,9 @@ export function TaskSubmissionDialog({
             <div className="flex items-center gap-2">
               <Twitter className="w-4 h-4 text-blue-400" />
               <span className="text-sm font-medium text-white">
-                @{twitterAuth.username}
+                {twitterAuth.username.startsWith("@")
+                  ? twitterAuth.username
+                  : `@${twitterAuth.username}`}
               </span>
             </div>
             <Badge className="bg-gray-700 text-gray-200 border-gray-600">
@@ -1013,7 +1089,10 @@ export function TaskSubmissionDialog({
                             <UserCheck className="w-5 h-5 text-blue-400" />
                             <div>
                               <p className="text-sm font-medium text-white">
-                                Follow @{task.accountToFollow}
+                                Follow{" "}
+                                {task.accountToFollow.startsWith("@")
+                                  ? task.accountToFollow
+                                  : `@${task.accountToFollow}`}
                               </p>
                               <p className="text-xs text-gray-400">
                                 Required to complete this task
@@ -1036,7 +1115,10 @@ export function TaskSubmissionDialog({
                         {!isCompleted && (
                           <div className="p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
                             <p className="text-sm text-blue-300 mb-2">
-                              Make sure you follow @{task.accountToFollow}{" "}
+                              Make sure you follow{" "}
+                              {task.accountToFollow!.startsWith("@")
+                                ? task.accountToFollow!
+                                : `@${task.accountToFollow!}`}{" "}
                               before submitting. Follow tasks are auto-approved
                               for easy participation.
                             </p>
@@ -1071,7 +1153,7 @@ export function TaskSubmissionDialog({
                               </Button>
                             </div>
 
-                            {showTweetGenerator && !showIntentCard && (
+                            {showTweetGenerator && (
                               <Card className="bg-purple-900/20 border-purple-700">
                                 <CardContent className="p-4 space-y-4">
                                   <div className="space-y-4">
@@ -1135,7 +1217,9 @@ export function TaskSubmissionDialog({
                                                     variant="outline"
                                                     className="text-xs bg-blue-900/20 border-blue-700 text-blue-200"
                                                   >
-                                                    @{account}
+                                                    {account.startsWith("@")
+                                                      ? account
+                                                      : `@${account}`}
                                                   </Badge>
                                                 )
                                               )}
@@ -1156,7 +1240,7 @@ export function TaskSubmissionDialog({
                                         Tweet Content
                                       </Label>
                                       <Textarea
-                                        placeholder="Write your tweet here, or click Generate to create one..."
+                                        placeholder="Generate a Tweet or Beautify...."
                                         value={tweetContent}
                                         onChange={(e) =>
                                           setTweetContent(e.target.value)
@@ -1164,11 +1248,22 @@ export function TaskSubmissionDialog({
                                         className="min-h-[120px] bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 resize-none"
                                         disabled={isCompleted}
                                       />
-                                      <div className="flex items-center justify-between text-xs text-gray-400">
-                                        <span>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span
+                                          className={`${
+                                            tweetContent.length < 230
+                                              ? "text-yellow-400"
+                                              : tweetContent.length <= 280
+                                              ? "text-green-400"
+                                              : "text-red-400"
+                                          }`}
+                                        >
                                           {tweetContent.length}/280 characters
+                                          (min: 230)
                                         </span>
-                                        <span>Language: {tweetLanguage}</span>
+                                        <span className="text-gray-400">
+                                          Language: {tweetLanguage}
+                                        </span>
                                       </div>
                                     </div>
 
@@ -1206,7 +1301,7 @@ export function TaskSubmissionDialog({
                                         className="bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
                                       >
                                         <Twitter className="w-3 h-3 mr-1" />
-                                        Save & Post
+                                        Post on Twitter
                                       </Button>
                                     </div>
                                   </div>
@@ -1223,96 +1318,76 @@ export function TaskSubmissionDialog({
                                         </AlertDescription>
                                       </Alert>
                                     )}
-
-                                  {apiCampaign.knowledgeBase?.manualText && (
-                                    <Alert className="bg-green-50 border-green-200">
-                                      <CheckCircle className="h-4 w-4 text-green-600" />
-                                      <AlertDescription className="text-green-800">
-                                        <strong>Ready!</strong> Using Groq AI
-                                        with your manual knowledge base (
-                                        {
-                                          apiCampaign.knowledgeBase.manualText
-                                            .length
-                                        }{" "}
-                                        characters).
-                                      </AlertDescription>
-                                    </Alert>
-                                  )}
                                 </CardContent>
                               </Card>
                             )}
 
-                            {showIntentCard && (
-                              <Card className="bg-blue-900/20 border-blue-700">
-                                <CardContent className="p-6 space-y-4">
-                                  <div className="text-center space-y-4">
-                                    <div className="flex justify-center">
-                                      <Twitter className="w-12 h-12 text-blue-400" />
+                            {/* Saved Tweet Preview */}
+                            {showSavedTweet && savedTweetPreview && (
+                              <Card className="bg-green-900/20 border-green-700">
+                                <CardContent className="p-4 space-y-4">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <CheckCircle className="w-4 h-4 text-green-400" />
+                                      <Label className="text-sm font-medium text-green-300">
+                                        Saved Tweet Preview
+                                      </Label>
                                     </div>
+                                    <Button
+                                      onClick={() => {
+                                        setTweetContent(savedTweetPreview);
+                                        setShowSavedTweet(false);
+                                        setShowTweetGenerator(true);
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                      className="bg-green-900/20 border-green-700 text-green-300 hover:bg-green-900/30"
+                                    >
+                                      <Pencil className="w-3 h-3 mr-1" />
+                                      Edit
+                                    </Button>
+                                  </div>
 
-                                    <div>
-                                      <h3 className="text-lg font-semibold text-white mb-2">
-                                        Ready to Post on X (Twitter)
-                                      </h3>
-                                      <p className="text-sm text-blue-200 mb-4">
-                                        Click here to head to X and post your
-                                        tweet
-                                      </p>
-                                    </div>
+                                  <div className="bg-gray-800 border border-gray-600 rounded-lg p-3">
+                                    <p className="text-sm text-gray-300">
+                                      {savedTweetPreview.length > 100
+                                        ? `${savedTweetPreview.substring(
+                                            0,
+                                            100
+                                          )}...`
+                                        : savedTweetPreview}
+                                    </p>
+                                  </div>
 
-                                    <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
-                                      <p className="text-sm text-gray-200 mb-2 font-medium">
-                                        Tweet Preview:
-                                      </p>
-                                      <p className="text-sm text-gray-300 italic">
-                                        {tweetContent.length > 100
-                                          ? `${tweetContent.substring(
-                                              0,
-                                              100
-                                            )}...`
-                                          : tweetContent}
-                                      </p>
-                                    </div>
-
-                                    <div className="bg-gray-800 border border-gray-600 rounded-lg p-3">
-                                      <p className="text-xs text-gray-400 mb-2">
-                                        Twitter Intent URL:
-                                      </p>
-                                      <a
-                                        href={twitterIntentUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-400 hover:text-blue-300 text-sm break-all underline"
-                                      >
-                                        {twitterIntentUrl}
-                                      </a>
-                                    </div>
-
-                                    <div className="flex gap-3">
-                                      <Button
-                                        onClick={() => {
-                                          window.open(
-                                            twitterIntentUrl,
-                                            "_blank",
-                                            "width=600,height=700"
-                                          );
-                                        }}
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                                      >
-                                        <ExternalLink className="w-4 h-4 mr-2" />
-                                        Open in New Tab
-                                      </Button>
-                                      <Button
-                                        onClick={() => {
-                                          setShowIntentCard(false);
-                                          setTwitterIntentUrl("");
-                                        }}
-                                        variant="outline"
-                                        className="bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600"
-                                      >
-                                        Back to Editor
-                                      </Button>
-                                    </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      onClick={() => {
+                                        const encodedTweet =
+                                          encodeURIComponent(savedTweetPreview);
+                                        const intentUrl = `https://twitter.com/intent/tweet?text=${encodedTweet}`;
+                                        window.open(
+                                          intentUrl,
+                                          "_blank",
+                                          "width=600,height=700"
+                                        );
+                                      }}
+                                      size="sm"
+                                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                      <ExternalLink className="w-3 h-3 mr-1" />
+                                      Open Twitter Again
+                                    </Button>
+                                    <Button
+                                      onClick={() => {
+                                        setShowSavedTweet(false);
+                                        setSavedTweetPreview("");
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                      className="bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600"
+                                    >
+                                      Dismiss
+                                    </Button>
                                   </div>
                                 </CardContent>
                               </Card>
@@ -1346,7 +1421,9 @@ export function TaskSubmissionDialog({
                                   variant="outline"
                                   className="text-xs bg-gray-700 border-gray-600 text-gray-200"
                                 >
-                                  #{hashtag}
+                                  {hashtag.startsWith("#")
+                                    ? hashtag
+                                    : `#${hashtag}`}
                                 </Badge>
                               ))}
                             </div>
@@ -1366,7 +1443,9 @@ export function TaskSubmissionDialog({
                                     variant="outline"
                                     className="text-xs bg-blue-900/20 border-blue-700 text-blue-200"
                                   >
-                                    @{account}
+                                    {account.startsWith("@")
+                                      ? account
+                                      : `@${account}`}
                                   </Badge>
                                 ))}
                               </div>
@@ -1399,11 +1478,20 @@ export function TaskSubmissionDialog({
                 </p>
                 <Button
                   onClick={submitAllTasks}
-                  disabled={loading}
+                  disabled={loading || isSubmittingAll}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
                 >
-                  <Send className="w-4 h-4 mr-2" />
-                  {loading ? "Submitting..." : "Submit All Tasks"}
+                  {loading || isSubmittingAll ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit All Tasks
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
