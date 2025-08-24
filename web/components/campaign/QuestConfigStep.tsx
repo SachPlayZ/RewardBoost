@@ -313,9 +313,6 @@ export function QuestConfigStep() {
                     </FormDescription>
                   </div>
                 </FormControl>
-                <FormDescription>
-                  Duration: 10 minutes minimum, 7 days maximum
-                </FormDescription>
                 {watchedStartDate && watch("endDate") && (
                   <div className="text-xs text-muted-foreground mt-1">
                     Current duration:{" "}

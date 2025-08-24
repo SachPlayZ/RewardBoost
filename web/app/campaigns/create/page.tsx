@@ -155,12 +155,16 @@ export default function CreateCampaignPage() {
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
+      // Scroll to top of the page for the new step
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      // Scroll to top of the page for the previous step
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -513,14 +517,41 @@ export default function CreateCampaignPage() {
               ) : (
                 // Tips for Success for other steps
                 <>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Tips for Success</CardTitle>
-                    <CardDescription>
-                      Follow these proven strategies to create engaging
-                      campaigns
-                    </CardDescription>
-                  </CardHeader>
                   <CardContent className="space-y-4">
+                    <div className="text-center">
+                      <div className="p-3 rounded-lg bg-gradient-to-r  from-purple-900/20 to-pink-900/20">
+                        <Sparkles className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                        <div className="font-medium text-sm mb-1">
+                          AI Assistant Ready
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-3">
+                          Click the AI Assistant button to generate compelling
+                          campaign titles and descriptions
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAIPanel(true)}
+                          className="gap-2 w-full"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Assistant
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <div className="text-lg font-semibold mb-2">
+                        Tips for Success
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-4">
+                        Follow these proven strategies to create engaging
+                        campaigns
+                      </div>
+                    </div>
+
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
                         <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
@@ -593,30 +624,6 @@ export default function CreateCampaignPage() {
                             steps
                           </div>
                         </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="text-center">
-                      <div className="p-3 rounded-lg bg-gradient-to-r  from-purple-900/20 to-pink-900/20">
-                        <Sparkles className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-                        <div className="font-medium text-sm mb-1">
-                          AI Assistant Ready
-                        </div>
-                        <div className="text-xs text-muted-foreground mb-3">
-                          Click the AI Assistant button to generate compelling
-                          campaign titles and descriptions
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowAIPanel(true)}
-                          className="gap-2 w-full"
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          Assistant
-                        </Button>
                       </div>
                     </div>
                   </CardContent>
