@@ -28,7 +28,6 @@ import { CampaignActionButton } from "@/components/campaign/CampaignActionButton
 import { APICampaign } from "@/hooks/use-unified-data";
 
 import { Trophy, Zap, Clock, Users, Gift, User } from "lucide-react";
-import { format } from "date-fns";
 
 // Real data is now fetched from unified hooks above
 
