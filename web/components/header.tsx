@@ -17,8 +17,8 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 export function Header() {
   const navItems = [
     { name: "Campaigns", href: "/campaigns" },
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Profile", href: "/profile" },
+    { name: "Quests", href: "/dashboard" },
+    { name: "My Profile", href: "/profile" },
   ];
 
   // No special click handling needed for page navigation

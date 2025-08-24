@@ -1048,9 +1048,7 @@ export function TaskSubmissionDialog({
                         <Badge className="bg-gray-700 text-gray-200 border-gray-600">
                           {index + 1}
                         </Badge>
-                        {task.title ||
-                          task.customTitle ||
-                          getTaskTypeDisplayName(task.type)}
+                        {task.customTitle || getTaskTypeDisplayName(task.type)}
                         {isCompleted && (
                           <Badge className="bg-green-900 text-green-200 border-green-700">
                             <CheckCircle className="w-3 h-3 mr-1" />
@@ -1112,6 +1110,50 @@ export function TaskSubmissionDialog({
 
                     {task.type === "x_post" && (
                       <div className="space-y-3">
+                        {/* Required Hashtags and Mentions */}
+                        {task.hashtags && task.hashtags.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-orange-300">
+                              Required Hashtags:
+                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {task.hashtags.map((hashtag) => (
+                                <Badge
+                                  key={hashtag}
+                                  variant="outline"
+                                  className="text-xs bg-gray-700 border-gray-600 text-gray-200"
+                                >
+                                  {hashtag.startsWith("#")
+                                    ? hashtag
+                                    : `#${hashtag}`}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {task.accountsToTag &&
+                          task.accountsToTag.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-blue-300">
+                                Required Mentions:
+                              </span>
+                              <div className="flex flex-wrap gap-1">
+                                {task.accountsToTag.map((account) => (
+                                  <Badge
+                                    key={account}
+                                    variant="outline"
+                                    className="text-xs bg-blue-900/20 border-blue-700 text-blue-200"
+                                  >
+                                    {account.startsWith("@")
+                                      ? account
+                                      : `@${account}`}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                         {/* AI Tweet Generator Section */}
                         {apiCampaign?.knowledgeBase?.enabled && (
                           <div className="space-y-3">
@@ -1150,7 +1192,7 @@ export function TaskSubmissionDialog({
                                     {/* Language Selection */}
                                     <div className="space-y-2">
                                       <Label className="text-sm font-medium text-purple-300">
-                                        Tweet Language
+                                        Choose Language
                                       </Label>
                                       <select
                                         value={tweetLanguage}
@@ -1177,46 +1219,6 @@ export function TaskSubmissionDialog({
                                       </select>
                                     </div>
 
-                                    {/* Required Mentions Display */}
-                                    {(() => {
-                                      const postTasks = enabledTasks.filter(
-                                        (task) => task.type === "x_post"
-                                      );
-                                      const accountsToMention =
-                                        postTasks.flatMap(
-                                          (task) => task.accountsToTag || []
-                                        );
-                                      if (accountsToMention.length > 0) {
-                                        return (
-                                          <div className="space-y-2">
-                                            <Label className="text-sm font-medium text-blue-300">
-                                              Required Mentions:
-                                            </Label>
-                                            <div className="flex flex-wrap gap-1">
-                                              {accountsToMention.map(
-                                                (account) => (
-                                                  <Badge
-                                                    key={account}
-                                                    variant="outline"
-                                                    className="text-xs bg-blue-900/20 border-blue-700 text-blue-200"
-                                                  >
-                                                    {account.startsWith("@")
-                                                      ? account
-                                                      : `@${account}`}
-                                                  </Badge>
-                                                )
-                                              )}
-                                            </div>
-                                            <p className="text-xs text-blue-400">
-                                              The generated tweet will include
-                                              mentions for these accounts
-                                            </p>
-                                          </div>
-                                        );
-                                      }
-                                      return null;
-                                    })()}
-
                                     {/* Tweet Content Text Area */}
                                     <div className="space-y-2">
                                       <Label className="text-sm font-medium text-purple-300">
@@ -1242,7 +1244,6 @@ export function TaskSubmissionDialog({
                                           }`}
                                         >
                                           {tweetContent.length}/280 characters
-                                          (min: 230)
                                         </span>
                                         <span className="text-gray-400">
                                           Language: {tweetLanguage}
@@ -1392,49 +1393,6 @@ export function TaskSubmissionDialog({
                           />
                         </div>
 
-                        {task.hashtags && task.hashtags.length > 0 && (
-                          <div>
-                            <h4 className="font-medium text-sm mb-2 text-orange-300">
-                              Required Hashtags:
-                            </h4>
-                            <div className="flex flex-wrap gap-1">
-                              {task.hashtags.map((hashtag) => (
-                                <Badge
-                                  key={hashtag}
-                                  variant="outline"
-                                  className="text-xs bg-gray-700 border-gray-600 text-gray-200"
-                                >
-                                  {hashtag.startsWith("#")
-                                    ? hashtag
-                                    : `#${hashtag}`}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {task.accountsToTag &&
-                          task.accountsToTag.length > 0 && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2 text-blue-300">
-                                Required Mentions:
-                              </h4>
-                              <div className="flex flex-wrap gap-1">
-                                {task.accountsToTag.map((account) => (
-                                  <Badge
-                                    key={account}
-                                    variant="outline"
-                                    className="text-xs bg-blue-900/20 border-blue-700 text-blue-200"
-                                  >
-                                    {account.startsWith("@")
-                                      ? account
-                                      : `@${account}`}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
                         {!isCompleted && (
                           <div className="p-3 bg-green-900/20 border border-green-700 rounded-lg">
                             <p className="text-sm text-green-300 mb-2">
@@ -1455,10 +1413,6 @@ export function TaskSubmissionDialog({
           {!allTasksCompleted && allTasksReadyToSubmit && (
             <div className="mt-6 p-4 bg-orange-900/20 border border-orange-700 rounded-lg">
               <div className="text-center">
-                <p className="text-sm text-orange-300 mb-3">
-                  All tasks are ready to submit! Click below to submit all tasks
-                  at once.
-                </p>
                 <Button
                   onClick={submitAllTasks}
                   disabled={loading || isSubmittingAll}
@@ -1472,7 +1426,7 @@ export function TaskSubmissionDialog({
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      Submit All Tasks
+                      Submit
                     </>
                   )}
                 </Button>
