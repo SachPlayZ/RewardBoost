@@ -143,7 +143,7 @@ export function TaskSubmissionDialog({
     return (
       <div className="fixed inset-0 bg-gray-900/95 backdrop-blur-sm z-[9999] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-20 h-20 animate-spin text-orange-500 mx-auto mb-6" />
+          <Loader2 className="w-20 h-20 animate-spin text-primary mx-auto mb-6" />
           <h3 className="text-2xl font-semibold text-white mb-3">
             {isSubmittingAll
               ? "Submitting All Tasks"
@@ -826,8 +826,8 @@ export function TaskSubmissionDialog({
       >
         <DialogContent className="max-w-md bg-gray-900 border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-orange-400">
-              <Shield className="w-5 h-5 text-orange-400" />
+            <DialogTitle className="flex items-center gap-2 text-secondary">
+              <Shield className="w-5 h-5 text-secondary" />
               Twitter Account Required
             </DialogTitle>
             <DialogDescription className="text-gray-300">
@@ -850,7 +850,7 @@ export function TaskSubmissionDialog({
 
             {twitterAuth.isVerifying ? (
               <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary mx-auto mb-4"></div>
                 <p className="text-sm text-gray-300">
                   Checking Twitter connection...
                 </p>
@@ -886,7 +886,7 @@ export function TaskSubmissionDialog({
                 </div>
                 <Button
                   onClick={() => setCurrentStep("tasks")}
-                  className="mt-4 bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                  className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
                 >
                   Continue to Tasks
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -939,8 +939,8 @@ export function TaskSubmissionDialog({
     >
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-orange-400">
-            <Send className="w-5 h-5 text-orange-400" />
+          <DialogTitle className="flex items-center gap-2 text-secondary">
+            <Send className="w-5 h-5 text-secondary" />
             Complete Tasks - {apiCampaign?.title || campaignId}
           </DialogTitle>
           <DialogDescription className="text-gray-300">
@@ -1038,7 +1038,7 @@ export function TaskSubmissionDialog({
                       : isPending
                       ? "border-yellow-600 bg-yellow-900/20"
                       : isReadyToSubmit
-                      ? "border-orange-600 bg-orange-900/20"
+                      ? "border-secondary bg-secondary/10"
                       : "bg-gray-800"
                   }`}
                 >
@@ -1062,14 +1062,14 @@ export function TaskSubmissionDialog({
                           </Badge>
                         )}
                         {isReadyToSubmit && (
-                          <Badge className="bg-orange-900 text-orange-200 border-orange-700">
+                          <Badge className="bg-secondary/20 text-secondary border-secondary/40">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Ready
                           </Badge>
                         )}
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-orange-900 text-orange-200 border-orange-700">
+                        <Badge className="bg-secondary/20 text-secondary border-secondary/40">
                           {task.qpReward} QP
                         </Badge>
                       </div>
@@ -1113,7 +1113,7 @@ export function TaskSubmissionDialog({
                         {/* Required Hashtags and Mentions */}
                         {task.hashtags && task.hashtags.length > 0 && (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-orange-300">
+                            <span className="text-sm font-medium text-secondary">
                               Required Hashtags:
                             </span>
                             <div className="flex flex-wrap gap-1">
@@ -1380,7 +1380,7 @@ export function TaskSubmissionDialog({
                         )}
 
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium text-orange-300">
+                          <Label className="text-sm font-medium text-secondary">
                             Your Post Link
                           </Label>
                           <Input
@@ -1389,7 +1389,7 @@ export function TaskSubmissionDialog({
                             value={postLink}
                             onChange={(e) => setPostLink(e.target.value)}
                             disabled={isCompleted}
-                            className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-orange-500 focus:ring-orange-500"
+                            className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-primary focus:ring-primary"
                           />
                         </div>
 
@@ -1411,12 +1411,12 @@ export function TaskSubmissionDialog({
 
           {/* Single Submit All Button */}
           {!allTasksCompleted && allTasksReadyToSubmit && (
-            <div className="mt-6 p-4 bg-orange-900/20 border border-orange-700 rounded-lg">
+            <div className="mt-6 p-4 bg-secondary/10 border border-secondary/40 rounded-lg">
               <div className="text-center">
                 <Button
                   onClick={submitAllTasks}
                   disabled={loading || isSubmittingAll}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
                 >
                   {loading || isSubmittingAll ? (
                     <>

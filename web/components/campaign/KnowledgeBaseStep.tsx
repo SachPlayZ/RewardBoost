@@ -372,9 +372,9 @@ export function KnowledgeBaseStep() {
                           </Badge>
                         </div>
 
-                        <Alert className="bg-orange-50 border-orange-200">
-                          <AlertCircle className="h-4 w-4 text-orange-600" />
-                          <AlertDescription className="text-orange-800">
+                        <Alert className="bg-secondary/10 border-secondary/40">
+                          <AlertCircle className="h-4 w-4 text-secondary" />
+                          <AlertDescription className="text-secondary">
                             <strong>Note:</strong> Rivalz service is currently
                             experiencing issues. Consider using "Manual Text"
                             option as an alternative.

@@ -173,7 +173,7 @@ export default function CampaignsPage() {
                     : "All participants"}
                 </span>
                 {campaign.status === "active" && (
-                  <span className="text-orange-500 font-medium">
+                  <span className="text-secondary font-medium">
                     {getTimeRemaining(campaign.endDate)}
                   </span>
                 )}

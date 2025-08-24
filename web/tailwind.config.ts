@@ -26,10 +26,10 @@ const config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(10, 70%, 65%)", // Updated primary color to red-orange
-          foreground: "hsl(10, 70%, 20%)", // Updated primary foreground color to red-orange
-          dark: "hsl(10, 70%, 45%)", // Updated primary dark color to red-orange
-          light: "hsl(10, 70%, 85%)", // Updated primary light color to red-orange
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+          dark: "hsl(var(--primary-dark))",
+          light: "hsl(var(--primary-light))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",

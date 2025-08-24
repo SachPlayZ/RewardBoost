@@ -172,7 +172,7 @@ export function AIAssistantPanel({
       icon: Clock,
       title: "Timing Matters",
       description: "Choose optimal start/end dates for maximum engagement",
-      color: "text-orange-600",
+      color: "text-secondary",
     },
     {
       icon: Zap,

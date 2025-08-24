@@ -603,7 +603,7 @@ export function HeroSection() {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <Button className="relative z-10 bg-secondary text-secondary-foreground hover:bg-secondary/90 px-8 py-3 rounded-full font-medium text-base shadow-lg ring-1 ring-white/10">
+        <Button className="relative z-10 bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full font-medium text-base shadow-lg ring-1 ring-white/10">
           Start Creating Content
         </Button>
       </Link>

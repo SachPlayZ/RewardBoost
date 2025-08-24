@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    /* Themeable Colors - Red-Orange Theme */
-    --background: 210 11% 7%; /* #0f1211 - keeping dark background */
-    --foreground: 20 14% 93%; /* #f4ebe7 - warm white */
+    /* Themeable Colors - Updated to requested palette */
+    --background: 210 11% 7%; /* dark background */
+    --foreground: 20 14% 93%; /* warm white */
 
     --muted: 240 2% 16%; /* #27272a */
     --muted-foreground: 20 14% 93% / 0.7; /* rgba(244, 235, 231, 0.7) */
@@ -19,15 +19,15 @@
     --popover: 210 11% 7%;
     --popover-foreground: 20 14% 93%;
 
-    /* Primary Accent Colors - Red-Orange */
-    --primary: 15 100% 65%; /* #ff5722 - vibrant red-orange */
-    --primary-foreground: 20 8% 6%; /* #0d0a09 */
-    --primary-dark: 10 100% 50%; /* #ff3300 - darker red */
-    --primary-light: 25 85% 75%; /* #ff8a65 - lighter orange */
+    /* Primary Accent Colors - #f7b034 */
+    --primary: 41 93% 58%; /* approx for #f7b034 */
+    --primary-foreground: 30 40% 8%;
+    --primary-dark: 40 78% 49%;
+    --primary-light: 44 97% 82%;
 
-    /* Secondary Accent Colors */
-    --secondary: 20 14% 93%; /* #f4ebe7 */
-    --secondary-foreground: 15 14% 8%; /* #1a1411 */
+    /* Secondary Accent Colors - #f27944 */
+    --secondary: 19 88% 62%; /* approx for #f27944 */
+    --secondary-foreground: 20 14% 8%;
 
     --accent: 240 2% 25%; /* #3f3f42 */
     --accent-foreground: 240 2% 96%; /* #f4f4f5 */

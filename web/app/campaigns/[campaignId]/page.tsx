@@ -449,7 +449,7 @@ export default function CampaignPage() {
                     <Button
                       onClick={handleEndCampaignAndDistribute}
                       disabled={distributing || isPending}
-                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       {distributing ? (
                         <>
@@ -785,14 +785,14 @@ export default function CampaignPage() {
                         {/* End Campaign and Distribute Button */}
                         {canEndCampaign(campaign) && (
                           <div className="space-y-3">
-                            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div className="p-4 bg-secondary/10 border border-secondary/40 rounded-lg">
                               <div className="flex items-start gap-3">
-                                <Clock className="w-5 h-5 text-orange-600 mt-0.5" />
+                                <Clock className="w-5 h-5 text-secondary mt-0.5" />
                                 <div className="flex-1">
-                                  <h5 className="font-medium text-orange-800 mb-1">
+                                  <h5 className="font-medium text-secondary mb-1">
                                     Campaign Ready to End
                                   </h5>
-                                  <p className="text-sm text-orange-700">
+                                  <p className="text-sm text-secondary">
                                     Your campaign has reached its end date.
                                     Click the button below to end the campaign
                                     and distribute rewards to participants.
@@ -804,7 +804,7 @@ export default function CampaignPage() {
                             <Button
                               onClick={handleEndCampaignAndDistribute}
                               disabled={distributing || isPending}
-                              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                               size="lg"
                             >
                               {distributing ? (

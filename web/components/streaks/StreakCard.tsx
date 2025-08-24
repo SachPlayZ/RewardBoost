@@ -66,7 +66,7 @@ export function StreakCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Flame className="h-5 w-5 text-orange-500" />
+          <Flame className="h-5 w-5 text-secondary" />
           Daily Streaks & Rewards
         </CardTitle>
         <CardDescription>
@@ -78,7 +78,7 @@ export function StreakCard() {
         <div className="text-center space-y-2">
           <div className="text-4xl font-bold text-primary flex items-center justify-center gap-2">
             {streakData.currentStreak}
-            <Flame className="h-8 w-8 text-orange-500" />
+            <Flame className="h-8 w-8 text-secondary" />
           </div>
           <div className="text-sm text-muted-foreground">
             Current Streak (days)

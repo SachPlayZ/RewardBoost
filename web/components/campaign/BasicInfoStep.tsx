@@ -141,7 +141,7 @@ export function BasicInfoStep() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-orange-100 dark:hover:bg-orange-900/20"
+                      className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-secondary/10 dark:hover:bg-secondary/10"
                       disabled={isBeautifying}
                       onClick={async () => {
                         setIsBeautifying(true);
@@ -177,9 +177,9 @@ export function BasicInfoStep() {
                       title="Beautify description with AI"
                     >
                       {isBeautifying ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-600 border-t-transparent" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondary border-t-transparent" />
                       ) : (
-                        <Wand2 className="h-4 w-4 text-orange-600" />
+                        <Wand2 className="h-4 w-4 text-secondary" />
                       )}
                     </Button>
                   )}
