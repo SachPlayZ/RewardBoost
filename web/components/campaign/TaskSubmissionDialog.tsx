@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAccount } from "wagmi";
 import { APICampaign } from "@/hooks/use-unified-data";
 import { useToast } from "@/hooks/use-toast";
+import { getTaskTypeDisplayName } from "@/lib/utils";
 import {
   Twitter,
   ExternalLink,
@@ -484,14 +485,14 @@ export function TaskSubmissionDialog({
         }
 
         console.log(`✅ Follow task ${task.id} ready to submit`);
-        return true; // Follow tasks don't need additional input
+        return true; // Follow account tasks don't need additional input
       });
 
       console.log(
         `📊 Tasks to submit: ${tasksToSubmit.length} out of ${enabledTasks.length}`
       );
       tasksToSubmit.forEach((task) => {
-        console.log(`  - ${task.type} task: ${task.id}`);
+        console.log(`  - ${getTaskTypeDisplayName(task.type)}: ${task.id}`);
       });
 
       if (tasksToSubmit.length === 0) {
@@ -547,7 +548,11 @@ export function TaskSubmissionDialog({
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`❌ API error for task ${task.id}:`, errorText);
-          throw new Error(`Failed to submit ${task.type} task: ${errorText}`);
+          throw new Error(
+            `Failed to submit ${getTaskTypeDisplayName(
+              task.type
+            )}: ${errorText}`
+          );
         }
 
         const result = await response.json();
@@ -803,7 +808,7 @@ export function TaskSubmissionDialog({
         (postLink.includes("twitter.com") || postLink.includes("x.com"))
       );
     }
-    return true; // Follow tasks don't need additional input
+    return true; // Follow account tasks don't need additional input
   });
 
   // Authentication Step
@@ -1045,7 +1050,7 @@ export function TaskSubmissionDialog({
                         </Badge>
                         {task.title ||
                           task.customTitle ||
-                          `${task.type.replace("_", " ").toUpperCase()} Task`}
+                          getTaskTypeDisplayName(task.type)}
                         {isCompleted && (
                           <Badge className="bg-green-900 text-green-200 border-green-700">
                             <CheckCircle className="w-3 h-3 mr-1" />
@@ -1073,15 +1078,6 @@ export function TaskSubmissionDialog({
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-sm mb-2 text-orange-300">
-                        Instructions:
-                      </h4>
-                      <p className="text-sm text-gray-300">
-                        {task.instruction || task.customDescription}
-                      </p>
-                    </div>
-
                     {task.type === "x_follow" && task.accountToFollow && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
@@ -1111,19 +1107,6 @@ export function TaskSubmissionDialog({
                             Follow
                           </Button>
                         </div>
-
-                        {!isCompleted && (
-                          <div className="p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
-                            <p className="text-sm text-blue-300 mb-2">
-                              Make sure you follow{" "}
-                              {task.accountToFollow!.startsWith("@")
-                                ? task.accountToFollow!
-                                : `@${task.accountToFollow!}`}{" "}
-                              before submitting. Follow tasks are auto-approved
-                              for easy participation.
-                            </p>
-                          </div>
-                        )}
                       </div>
                     )}
 

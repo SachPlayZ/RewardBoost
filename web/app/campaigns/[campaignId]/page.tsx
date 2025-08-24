@@ -42,6 +42,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuestContract } from "@/hooks/use-quest-contract";
 import { SubmissionReviewTab } from "@/components/campaign/SubmissionReviewDialog";
 import { useToast } from "@/hooks/use-toast";
+import { getTaskTypeDisplayName } from "@/lib/utils";
 
 interface Campaign {
   id: string;
@@ -610,9 +611,7 @@ export default function CampaignPage() {
                                     </span>
                                     <h4 className="font-medium">
                                       {task.customTitle ||
-                                        `${task.type
-                                          .replace("_", " ")
-                                          .toUpperCase()} Task`}
+                                        getTaskTypeDisplayName(task.type)}
                                     </h4>
                                   </div>
                                   <p className="text-sm text-muted-foreground mb-2">
@@ -991,9 +990,7 @@ export default function CampaignPage() {
                                   </span>
                                   <h4 className="font-medium">
                                     {task.customTitle ||
-                                      `${task.type
-                                        .replace("_", " ")
-                                        .toUpperCase()} Task`}
+                                      getTaskTypeDisplayName(task.type)}
                                   </h4>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-2">

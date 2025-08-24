@@ -47,6 +47,7 @@ import { KnowledgeBaseStep } from "@/components/campaign/KnowledgeBaseStep";
 import { RewardsStep } from "@/components/campaign/RewardsStep";
 import { AIAssistantPanel } from "@/components/campaign/AIAssistantPanel";
 import { format } from "date-fns";
+import { getTaskTypeDisplayName, getTaskTypeDescription } from "@/lib/utils";
 
 const steps = [
   {
@@ -214,10 +215,12 @@ export default function CreateCampaignPage() {
                 : task.type === TaskType.X_POST
                 ? "x_post"
                 : "custom",
-            title: task.customTitle || `${task.type} task`,
+            title: task.customTitle || getTaskTypeDisplayName(task.type),
             instruction:
-              task.customDescription || `Complete the ${task.type} task`,
-            completionCriteria: `Successfully complete the ${task.type} task`,
+              task.customDescription || getTaskTypeDescription(task.type),
+            completionCriteria: `Successfully complete the ${getTaskTypeDisplayName(
+              task.type
+            ).toLowerCase()}`,
             enabled: task.enabled,
             accountToFollow: task.accountToFollow,
             postLimit: task.postLimit,

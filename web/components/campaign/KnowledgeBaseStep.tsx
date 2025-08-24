@@ -474,24 +474,7 @@ export function KnowledgeBaseStep() {
                         >
                           Knowledge Base Content
                         </Label>
-                        <Badge
-                          variant="outline"
-                          className="text-xs bg-green-50 text-green-700 border-green-200"
-                        >
-                          <Zap className="w-3 h-3 mr-1" />
-                          Uses Groq AI
-                        </Badge>
                       </div>
-
-                      <Alert className="bg-green-50 border-green-200">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <AlertDescription className="text-green-800">
-                          <strong>Recommended:</strong> This method is currently
-                          more reliable and uses Groq's fast AI for tweet
-                          generation. Perfect for when you want full control
-                          over your knowledge base.
-                        </AlertDescription>
-                      </Alert>
 
                       <Textarea
                         id="manual-text"

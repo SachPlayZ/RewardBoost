@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 interface TimePickerProps {
-  value: string; // HH:MM format
+  value: string; // HH:MM format in local time
   onChange: (time: string) => void;
   disabled?: boolean;
   className?: string;
@@ -25,23 +25,18 @@ export function TimePicker({
   className,
 }: TimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [isAM, setIsAM] = useState(true);
+  const [inputValue, setInputValue] = useState(value || "");
 
-  // Parse initial value
+  // Update input when value prop changes
   useEffect(() => {
-    if (value) {
-      const [hours, minutes] = value.split(":").map(Number);
-      setInputValue(value);
-      setIsAM(hours < 12);
-    }
+    setInputValue(value || "");
   }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
 
-    // Parse time input (HH:MM format)
+    // Basic validation: HH:MM format
     if (/^\d{1,2}:\d{2}$/.test(val)) {
       const [hours, minutes] = val.split(":").map(Number);
       if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
@@ -51,42 +46,26 @@ export function TimePicker({
   };
 
   const handleInputBlur = () => {
-    // Validate and format input on blur
+    // Format time on blur (add leading zeros) but only if input changed
     if (inputValue && /^\d{1,2}:\d{2}$/.test(inputValue)) {
       const [hours, minutes] = inputValue.split(":").map(Number);
       if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
         const formattedTime = `${String(hours).padStart(2, "0")}:${String(
           minutes
         ).padStart(2, "0")}`;
-        setInputValue(formattedTime);
-        onChange(formattedTime);
+
+        // Only update if the formatted time is different from current value
+        if (formattedTime !== value) {
+          setInputValue(formattedTime);
+          onChange(formattedTime);
+        } else {
+          setInputValue(formattedTime);
+        }
       } else {
-        setInputValue(value); // Reset to original value if invalid
+        setInputValue(value || ""); // Reset to original value if invalid
       }
     } else {
-      setInputValue(value); // Reset to original value if invalid
-    }
-  };
-
-  const toggleAMPM = () => {
-    setIsAM(!isAM);
-    if (inputValue && /^\d{1,2}:\d{2}$/.test(inputValue)) {
-      const [hours, minutes] = inputValue.split(":").map(Number);
-      let newHours = hours;
-
-      if (isAM && hours < 12) {
-        // Currently AM, switching to PM
-        newHours = hours === 0 ? 12 : hours + 12;
-      } else if (!isAM && hours >= 12) {
-        // Currently PM, switching to AM
-        newHours = hours === 12 ? 0 : hours - 12;
-      }
-
-      const newTime = `${String(newHours).padStart(2, "0")}:${String(
-        minutes
-      ).padStart(2, "0")}`;
-      setInputValue(newTime);
-      onChange(newTime);
+      setInputValue(value || ""); // Reset to original value if invalid
     }
   };
 
@@ -96,6 +75,30 @@ export function TimePicker({
     const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
     const ampm = hours >= 12 ? "PM" : "AM";
     return `${displayHour}:${String(minutes).padStart(2, "0")} ${ampm}`;
+  };
+
+  // Helper function to convert local time to UTC timestamp
+  const getUTCTimestamp = (localTime: string, date: Date = new Date()) => {
+    if (!localTime) return null;
+
+    const [hours, minutes] = localTime.split(":").map(Number);
+    const localDate = new Date(date);
+    localDate.setHours(hours, minutes, 0, 0);
+
+    // Convert to UTC timestamp (milliseconds)
+    return localDate.getTime();
+  };
+
+  // Get current local timezone offset for display
+  const getTimezoneOffset = () => {
+    const offset = new Date().getTimezoneOffset();
+    const hours = Math.abs(Math.floor(offset / 60));
+    const minutes = Math.abs(offset % 60);
+    // getTimezoneOffset returns negative for timezones ahead of UTC
+    const sign = offset < 0 ? "+" : "-";
+    return `${sign}${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   return (
@@ -121,7 +124,7 @@ export function TimePicker({
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Time (HH:MM)
+                  Time (HH:MM) - Your Local Time
                 </label>
                 <Input
                   type="text"
@@ -132,35 +135,9 @@ export function TimePicker({
                   className="text-center text-lg font-mono"
                   autoFocus
                 />
-              </div>
-
-              <div className="flex items-center justify-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleAMPM}
-                  className={cn(
-                    "px-3 py-1 text-xs",
-                    isAM
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:bg-accent"
-                  )}
-                >
-                  AM
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleAMPM}
-                  className={cn(
-                    "px-3 py-1 text-xs",
-                    !isAM
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:bg-accent"
-                  )}
-                >
-                  PM
-                </Button>
+                <p className="text-xs text-muted-foreground mt-1 text-center">
+                  Your timezone: {getTimezoneOffset()}
+                </p>
               </div>
             </div>
           </div>
@@ -168,11 +145,48 @@ export function TimePicker({
           <div className="text-center">
             <div className="text-2xl font-bold">{formatDisplayTime()}</div>
             <div className="text-sm text-muted-foreground">
-              {value && `${value} UTC`}
+              {value &&
+                `Local: ${value} | UTC: ${
+                  getUTCTimestamp(value)
+                    ? new Date(getUTCTimestamp(value)!)
+                        .toISOString()
+                        .slice(11, 16)
+                    : "N/A"
+                }`}
             </div>
           </div>
         </div>
       </PopoverContent>
     </Popover>
   );
+}
+
+// Export helper function for external use
+export function convertLocalTimeToUTC(
+  localTime: string,
+  date: Date = new Date()
+): number | null {
+  if (!localTime) return null;
+
+  const [hours, minutes] = localTime.split(":").map(Number);
+  const localDate = new Date(date);
+  localDate.setHours(hours, minutes, 0, 0);
+
+  // Return UTC timestamp in milliseconds
+  return localDate.getTime();
+}
+
+// Export helper function to get UTC timestamp for a specific date and time
+export function getUTCTimestampForDate(
+  localTime: string,
+  date: Date
+): number | null {
+  if (!localTime) return null;
+
+  const [hours, minutes] = localTime.split(":").map(Number);
+  const localDate = new Date(date);
+  localDate.setHours(hours, minutes, 0, 0);
+
+  // Return UTC timestamp in milliseconds
+  return localDate.getTime();
 }

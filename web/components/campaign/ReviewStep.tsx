@@ -42,6 +42,7 @@ import {
   Clock,
   Zap,
 } from "lucide-react";
+import { getTaskTypeDisplayName, getTaskTypeDescription } from "@/lib/utils";
 
 interface ReviewStepProps {
   data: CampaignFormData;
@@ -121,10 +122,12 @@ export function ReviewStep({ data }: ReviewStepProps) {
                 : task.type === TaskType.X_POST
                 ? "x_post"
                 : "custom",
-            title: task.customTitle || `${task.type} task`,
+            title: task.customTitle || getTaskTypeDisplayName(task.type),
             instruction:
-              task.customDescription || `Complete the ${task.type} task`,
-            completionCriteria: `Successfully complete the ${task.type} task`,
+              task.customDescription || getTaskTypeDescription(task.type),
+            completionCriteria: `Successfully complete the ${getTaskTypeDisplayName(
+              task.type
+            ).toLowerCase()}`,
             enabled: task.enabled,
             accountToFollow: task.accountToFollow,
             postLimit: task.postLimit,

@@ -44,3 +44,30 @@ export function ensureFutureTimestamp(timestamp: number | null, bufferMinutes: n
 
   return timestamp; // Return as-is, no validation
 }
+
+// Task type conversion utilities
+export function getTaskTypeDisplayName(taskType: string): string {
+  switch (taskType) {
+    case 'x_follow':
+      return 'Follow Account on X';
+    case 'x_post':
+      return 'Post on Twitter';
+    case 'custom':
+      return 'Custom Task';
+    default:
+      return taskType;
+  }
+}
+
+export function getTaskTypeDescription(taskType: string): string {
+  switch (taskType) {
+    case 'x_follow':
+      return 'Follow the specified account on X/Twitter';
+    case 'x_post':
+      return 'Create and post content on X/Twitter';
+    case 'custom':
+      return 'Complete the custom task as specified';
+    default:
+      return `Complete the ${taskType} task`;
+  }
+}

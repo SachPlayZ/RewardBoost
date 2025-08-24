@@ -158,13 +158,11 @@ export function QuestConfigStep() {
                         const mm = Number(mmStr || 0);
                         const base = field.value ?? new Date();
                         const combined = new Date(
-                          Date.UTC(
-                            base.getUTCFullYear(),
-                            base.getUTCMonth(),
-                            base.getUTCDate(),
-                            hh,
-                            mm
-                          )
+                          base.getFullYear(),
+                          base.getMonth(),
+                          base.getDate(),
+                          hh,
+                          mm
                         );
                         field.onChange(combined);
 
@@ -179,7 +177,9 @@ export function QuestConfigStep() {
                         }
                       }}
                     />
-                    <FormDescription>Select time in UTC</FormDescription>
+                    <FormDescription>
+                      Select time in your local timezone
+                    </FormDescription>
                   </div>
                 </FormControl>
                 <FormMessage />
