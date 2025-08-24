@@ -140,7 +140,7 @@ Participant {
 #### **Administrative**
 
 - `addSupportedToken()`: Expand token support
-- `updateTreasury()`: Modify platform treasury
+- `withdrawPlatformFees()`: Withdraw collected platform fees from internal vault
 - `pause()/unpause()`: Emergency controls
 
 ## Security Measures
@@ -218,7 +218,7 @@ Participant {
 
 ### **Initial Setup Requirements**
 
-1. Treasury address configuration
+1. Internal vault system (no external treasury needed)
 2. Supported token whitelist setup
 3. Platform fee collection mechanism
 4. Admin role assignment

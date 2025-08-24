@@ -125,11 +125,10 @@ import "../src/QuestRewardsContract.sol";
 contract DeployScript is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address treasury = vm.envAddress("TREASURY_ADDRESS");
 
         vm.startBroadcast(deployerPrivateKey);
 
-        QuestRewardsContract questContract = new QuestRewardsContract(treasury);
+        QuestRewardsContract questContract = new QuestRewardsContract();
 
         // Add supported tokens
         questContract.addSupportedToken(0xA0B86a33e6e5e9EB02b6816E4D8F5C9A6c8A9A1B); // USDC

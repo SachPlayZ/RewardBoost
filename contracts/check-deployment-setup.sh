@@ -61,12 +61,7 @@ if [ -f ".env" ]; then
         fi
     fi
 
-    # Check treasury address
-    if [ -z "$TREASURY_ADDRESS" ]; then
-        print_warning "TREASURY_ADDRESS not set (will be set automatically during deployment)"
-    else
-        print_success "TREASURY_ADDRESS is set: $TREASURY_ADDRESS"
-    fi
+    # Check deployment configuration - using internal vault system
 else
     print_error ".env file not found"
     print_info "Copy from: cp env.deployment.example .env"

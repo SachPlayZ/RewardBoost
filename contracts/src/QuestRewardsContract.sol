@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
+// Internal vault system for platform fees - no external treasury needed
+
 /**
  * @title QuestRewardsContract
  * @dev Smart contract for managing Web3 quest campaigns with multiple reward distribution methods
@@ -52,12 +54,23 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
         bool rewardClaimed;
     }
 
+    // Struct to help with createCampaign parameters to avoid stack too deep
+    struct CampaignParams {
+        address rewardToken;
+        RewardDistributionMethod distributionMethod;
+        uint256 startTime;
+        uint256 endTime;
+        uint256 maxParticipants;
+        uint256 totalRewardAmount;
+        uint256 numberOfWinners;
+    }
+
     // ============ STATE VARIABLES ============
 
     uint256 public nextCampaignId = 1;
-    uint256 public constant MINIMUM_REWARD_AMOUNT = 50 * 10 ** 6; // $50 in USDC (6 decimals)
-    uint256 public constant PLATFORM_FEE_PERCENTAGE = 250; // 2.5% (basis points)
-    uint256 public guaranteedRewardPerUser = 0.01 * 10 ** 6; // $0.01 in USDC
+    // Minimum reward amount removed - campaigns can now be created with any amount >= 1 wei
+    uint256 public constant PLATFORM_FEE_PERCENTAGE = 5; // 5% platform fee
+    uint256 public guaranteedRewardPerUser = 0.02 * 10 ** 6; // $0.02 in USDC
 
     // Campaign ID => Campaign
     mapping(uint256 => Campaign) public campaigns;
@@ -71,8 +84,16 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
     // Campaign ID => Array of winners (for lucky draw)
     mapping(uint256 => address[]) public winners;
 
-    // Platform treasury for collecting fees
-    address public treasury;
+    // Platform fee vault - stores collected fees by token address
+    mapping(address => uint256) public platformFeeVault;
+
+    // Events for platform fee management
+    event PlatformFeeCollected(address indexed token, uint256 amount);
+    event PlatformFeeWithdrawn(
+        address indexed token,
+        uint256 amount,
+        address indexed to
+    );
 
     // Supported reward tokens (SEI and USDC only)
     mapping(address => bool) public supportedTokens;
@@ -139,6 +160,24 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
         uint256 newTotalPoints
     );
 
+    event GuaranteedRewardsWithdrawn(
+        uint256 participantCount,
+        uint256 totalAmount
+    );
+
+    // ============ GUARANTEED REWARDS ============
+
+    /**
+     * @dev Internal function to distribute guaranteed rewards to eligible participants
+     * Note: Guaranteed rewards are disabled in this version - platform fees go to vault
+     */
+    function _distributeGuaranteedRewards(
+        address[] memory eligibleParticipants
+    ) internal {
+        // Guaranteed rewards disabled - keeping function for interface compatibility
+        // Future versions could implement this using platform fee vault
+    }
+
     // ============ MODIFIERS ============
 
     modifier onlyCreator(uint256 _campaignId) {
@@ -163,20 +202,16 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
             campaign.status == CampaignStatus.Active,
             "Campaign not active"
         );
-        require(block.timestamp >= campaign.startTime, "Campaign not started");
-        require(block.timestamp <= campaign.endTime, "Campaign ended");
         _;
     }
 
     // ============ CONSTRUCTOR ============
 
-    constructor(address _treasury) {
-        treasury = _treasury;
-
-        // Set USDC address
+    constructor() {
+        // Set USDC address (SEI Testnet)
         address usdcAddress;
         assembly {
-            usdcAddress := 0x4fCF1784B31630811181f670Aea7Aea7A7bEF803eaED
+            usdcAddress := 0x4fCF1784B31630811181f670Aea7A7bEF803eaED
         }
         USDC_ADDRESS = usdcAddress;
 
@@ -188,7 +223,8 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
     // ============ CAMPAIGN MANAGEMENT ============
 
     /**
-     * @dev Creates a new campaign
+     * @dev Creates and activates a new campaign with SEI (native token) in one transaction
+     * This function is payable and expects SEI to be sent
      */
     function createCampaign(
         address _rewardToken,
@@ -198,42 +234,93 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
         uint256 _maxParticipants,
         uint256 _totalRewardAmount,
         uint256 _numberOfWinners
-    ) external whenNotPaused returns (uint256) {
+    ) external payable whenNotPaused returns (uint256) {
+        // Only allow SEI (native token) campaigns through this function
         require(
-            supportedTokens[_rewardToken],
-            "Only SEI and USDC are supported"
+            _rewardToken == NATIVE_TOKEN,
+            "Use createCampaignWithUSDC for USDC campaigns"
         );
 
-        require(
-            _totalRewardAmount >= MINIMUM_REWARD_AMOUNT,
-            "Reward amount too low"
-        );
-        require(_startTime > block.timestamp, "Start time must be in future");
-        require(_endTime > _startTime, "End time must be after start time");
-        require(_endTime <= _startTime + 365 days, "Campaign too long");
-
-        require(_numberOfWinners > 0, "Must have at least 1 winner");
-
-        uint256 campaignId = nextCampaignId++;
-
-        uint256 platformFee = (_totalRewardAmount * PLATFORM_FEE_PERCENTAGE) /
-            10000;
-        uint256 depositRequired = _totalRewardAmount + platformFee;
-
-        campaigns[campaignId] = Campaign({
-            campaignId: campaignId,
-            creator: msg.sender,
-            rewardToken: IERC20(_rewardToken),
+        // Create params struct to avoid stack too deep
+        CampaignParams memory params = CampaignParams({
+            rewardToken: _rewardToken,
             distributionMethod: _distributionMethod,
             startTime: _startTime,
             endTime: _endTime,
             maxParticipants: _maxParticipants,
-            status: CampaignStatus.Draft,
             totalRewardAmount: _totalRewardAmount,
+            numberOfWinners: _numberOfWinners
+        });
+
+        return _createCampaignInternal(params);
+    }
+
+    /**
+     * @dev Creates and activates a new campaign with USDC in one transaction
+     * This function is NOT payable and expects USDC approval
+     */
+    function createCampaignWithUSDC(
+        RewardDistributionMethod _distributionMethod,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _maxParticipants,
+        uint256 _totalRewardAmount,
+        uint256 _numberOfWinners
+    ) external whenNotPaused returns (uint256) {
+        // Create params struct to avoid stack too deep
+        CampaignParams memory params = CampaignParams({
+            rewardToken: USDC_ADDRESS,
+            distributionMethod: _distributionMethod,
+            startTime: _startTime,
+            endTime: _endTime,
+            maxParticipants: _maxParticipants,
+            totalRewardAmount: _totalRewardAmount,
+            numberOfWinners: _numberOfWinners
+        });
+
+        return _createCampaignInternal(params);
+    }
+
+    /**
+     * @dev Internal function to create campaign - split to avoid stack too deep
+     */
+    function _createCampaignInternal(
+        CampaignParams memory params
+    ) internal returns (uint256) {
+        require(
+            supportedTokens[params.rewardToken],
+            "Only SEI and USDC are supported"
+        );
+
+        require(
+            params.totalRewardAmount > 0,
+            "Reward amount must be greater than 0"
+        );
+
+        require(params.numberOfWinners > 0, "Must have at least 1 winner");
+
+        uint256 campaignId = nextCampaignId++;
+        uint256 platformFee = (params.totalRewardAmount *
+            PLATFORM_FEE_PERCENTAGE) / 100;
+        uint256 depositRequired = params.totalRewardAmount + platformFee;
+
+        // Create the campaign
+        campaigns[campaignId] = Campaign({
+            campaignId: campaignId,
+            creator: msg.sender,
+            rewardToken: params.rewardToken == NATIVE_TOKEN
+                ? IERC20(address(0))
+                : IERC20(params.rewardToken),
+            distributionMethod: params.distributionMethod,
+            startTime: params.startTime,
+            endTime: params.endTime,
+            maxParticipants: params.maxParticipants,
+            status: CampaignStatus.Draft,
+            totalRewardAmount: params.totalRewardAmount,
             platformFee: platformFee,
             guaranteedRewardPerUser: guaranteedRewardPerUser,
             depositRequired: depositRequired,
-            numberOfWinners: _numberOfWinners,
+            numberOfWinners: params.numberOfWinners,
             totalParticipants: 0,
             rewardsDistributed: false
         });
@@ -241,18 +328,68 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
         emit CampaignCreated(
             campaignId,
             msg.sender,
-            _rewardToken,
-            _distributionMethod,
-            _totalRewardAmount,
-            _startTime,
-            _endTime
+            params.rewardToken,
+            params.distributionMethod,
+            params.totalRewardAmount,
+            params.startTime,
+            params.endTime
+        );
+
+        // Activate the campaign by handling deposits
+        _activateCampaignInternal(
+            campaignId,
+            params.rewardToken,
+            depositRequired,
+            platformFee
         );
 
         return campaignId;
     }
 
     /**
-     * @dev Activates a campaign by depositing required tokens
+     * @dev Internal function to activate campaign - split to avoid stack too deep
+     */
+    function _activateCampaignInternal(
+        uint256 campaignId,
+        address rewardToken,
+        uint256 depositRequired,
+        uint256 platformFee
+    ) internal {
+        Campaign storage campaign = campaigns[campaignId];
+
+        // Validate balances and transfers
+        if (rewardToken == NATIVE_TOKEN) {
+            require(msg.value >= depositRequired, "Insufficient SEI sent");
+        } else {
+            IERC20 token = IERC20(rewardToken);
+            require(
+                token.balanceOf(msg.sender) >= depositRequired,
+                "Insufficient token balance"
+            );
+            require(
+                token.allowance(msg.sender, address(this)) >= depositRequired,
+                "Insufficient token allowance"
+            );
+            require(
+                token.transferFrom(msg.sender, address(this), depositRequired),
+                "Token transfer failed"
+            );
+        }
+
+        // Store platform fee in vault
+        address tokenAddress = rewardToken == NATIVE_TOKEN
+            ? address(0)
+            : rewardToken;
+        platformFeeVault[tokenAddress] += platformFee;
+        emit PlatformFeeCollected(tokenAddress, platformFee);
+
+        // Activate the campaign
+        campaign.status = CampaignStatus.Active;
+    }
+
+    /**
+     * @dev Legacy function - campaigns are now automatically activated upon creation
+     * This function is kept for backward compatibility but should not be used for new campaigns
      */
     function activateCampaign(
         uint256 _campaignId
@@ -267,13 +404,32 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
             campaign.status == CampaignStatus.Draft,
             "Campaign already activated"
         );
+        require(
+            address(campaign.rewardToken) != address(0),
+            "Use createCampaign for native tokens - this legacy function only supports ERC20"
+        );
 
-        // Transfer required tokens to contract
+        uint256 platformFee = (campaign.totalRewardAmount *
+            PLATFORM_FEE_PERCENTAGE) / 100;
+        uint256 depositRequired = campaign.totalRewardAmount + platformFee;
+
+        campaign.platformFee = platformFee;
+        campaign.depositRequired = depositRequired;
+
+        require(
+            campaign.rewardToken.balanceOf(msg.sender) >= depositRequired,
+            "Insufficient token balance"
+        );
+        require(
+            campaign.rewardToken.allowance(msg.sender, address(this)) >=
+                depositRequired,
+            "Insufficient token allowance"
+        );
         require(
             campaign.rewardToken.transferFrom(
                 msg.sender,
                 address(this),
-                campaign.depositRequired
+                depositRequired
             ),
             "Token transfer failed"
         );
@@ -298,20 +454,41 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
                 campaign.status == CampaignStatus.Active,
             "Cannot cancel this campaign"
         );
+
+        // Prevent cancellation after campaign has started
         require(
             block.timestamp < campaign.startTime,
             "Cannot cancel campaign after it has started"
         );
+
         require(!campaign.rewardsDistributed, "Rewards already distributed");
 
-        uint256 refundAmount = campaign.depositRequired;
+        uint256 refundAmount = campaign.totalRewardAmount +
+            campaign.platformFee;
         campaign.status = CampaignStatus.Cancelled;
 
+        // Remove platform fee from vault since it's being refunded
+        address tokenAddress = address(campaign.rewardToken) == address(0)
+            ? address(0)
+            : address(campaign.rewardToken);
+        platformFeeVault[tokenAddress] -= campaign.platformFee;
+
+        // Refund total amount
         if (refundAmount > 0) {
-            require(
-                campaign.rewardToken.transfer(campaign.creator, refundAmount),
-                "Refund failed"
-            );
+            if (address(campaign.rewardToken) == address(0)) {
+                (bool success, ) = campaign.creator.call{value: refundAmount}(
+                    ""
+                );
+                require(success, "SEI refund failed");
+            } else {
+                require(
+                    campaign.rewardToken.transfer(
+                        campaign.creator,
+                        refundAmount
+                    ),
+                    "Token refund failed"
+                );
+            }
         }
 
         emit CampaignCancelled(_campaignId, campaign.creator, refundAmount);
@@ -368,22 +545,18 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
             "Not a participant"
         );
 
-        // Calculate the difference to add to total quest points
         uint256 currentScore = participants[_campaignId][_participant]
             .questScore;
         if (_score > currentScore) {
             uint256 pointsToAdd = _score - currentScore;
             totalQuestPoints[_participant] += pointsToAdd;
-
             emit TotalQuestPointsUpdated(
                 _participant,
                 totalQuestPoints[_participant]
             );
         }
 
-        // Update the per-campaign quest score
         participants[_campaignId][_participant].questScore = _score;
-
         emit QuestScoreUpdated(_campaignId, _participant, _score);
     }
 
@@ -405,22 +578,13 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
             campaign.status == CampaignStatus.Active,
             "Campaign not active"
         );
-        require(block.timestamp > campaign.endTime, "Campaign not ended yet");
+
         require(!campaign.rewardsDistributed, "Rewards already distributed");
 
         campaign.status = CampaignStatus.Ended;
         campaign.rewardsDistributed = true;
 
-        // Transfer platform fee to treasury
-        if (campaign.platformFee > 0) {
-            require(
-                campaign.rewardToken.transfer(treasury, campaign.platformFee),
-                "Platform fee transfer failed"
-            );
-        }
-
         uint256 totalDistributed = 0;
-
         if (campaign.distributionMethod == RewardDistributionMethod.LuckyDraw) {
             totalDistributed = _distributeLuckyDraw(_campaignId);
         } else if (
@@ -445,10 +609,62 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
     ) internal returns (uint256) {
         Campaign storage campaign = campaigns[_campaignId];
         address[] memory participantList = participantLists[_campaignId];
-
         require(participantList.length > 0, "No participants");
 
-        // Filter participants with at least 60 quest points
+        // Get eligible participants
+        address[] memory eligibleParticipants = _getEligibleParticipants(
+            _campaignId,
+            participantList
+        );
+        require(
+            eligibleParticipants.length > 0,
+            "No eligible participants (need 60+ quest points)"
+        );
+
+        uint256 winnersCount = campaign.numberOfWinners;
+        if (winnersCount > eligibleParticipants.length) {
+            winnersCount = eligibleParticipants.length;
+        }
+
+        return
+            _distributeToWinners(
+                _campaignId,
+                eligibleParticipants,
+                winnersCount
+            );
+    }
+
+    /**
+     * @dev Equal distribution among all participants
+     */
+    function _distributeEqual(uint256 _campaignId) internal returns (uint256) {
+        address[] memory participantList = participantLists[_campaignId];
+        require(participantList.length > 0, "No participants");
+
+        address[] memory eligibleParticipants = _getEligibleParticipants(
+            _campaignId,
+            participantList
+        );
+        require(
+            eligibleParticipants.length > 0,
+            "No eligible participants (need 60+ quest points)"
+        );
+
+        return
+            _distributeToWinners(
+                _campaignId,
+                eligibleParticipants,
+                eligibleParticipants.length
+            );
+    }
+
+    /**
+     * @dev Get eligible participants with 60+ quest points
+     */
+    function _getEligibleParticipants(
+        uint256 _campaignId,
+        address[] memory participantList
+    ) internal view returns (address[] memory) {
         address[] memory eligibleParticipants = new address[](
             participantList.length
         );
@@ -462,20 +678,26 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
             }
         }
 
-        require(
-            eligibleCount > 0,
-            "No eligible participants (need 60+ quest points)"
-        );
-
-        uint256 winnersCount = campaign.numberOfWinners;
-        if (winnersCount > eligibleCount) {
-            winnersCount = eligibleCount;
+        // Resize array to actual eligible count
+        address[] memory result = new address[](eligibleCount);
+        for (uint256 i = 0; i < eligibleCount; i++) {
+            result[i] = eligibleParticipants[i];
         }
+        return result;
+    }
 
+    /**
+     * @dev Distribute rewards to winners
+     */
+    function _distributeToWinners(
+        uint256 _campaignId,
+        address[] memory eligibleParticipants,
+        uint256 winnersCount
+    ) internal returns (uint256) {
+        Campaign storage campaign = campaigns[_campaignId];
         uint256 rewardPerWinner = campaign.totalRewardAmount / winnersCount;
         uint256 totalDistributed = 0;
 
-        // Simple random selection from eligible participants
         address[] memory selectedWinners = new address[](winnersCount);
 
         for (uint256 i = 0; i < winnersCount; i++) {
@@ -483,110 +705,62 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
                 keccak256(
                     abi.encodePacked(block.timestamp, block.prevrandao, i)
                 )
-            ) % eligibleCount;
+            ) % eligibleParticipants.length;
 
             address winner = eligibleParticipants[randomIndex];
             selectedWinners[i] = winner;
 
-            require(
-                campaign.rewardToken.transfer(winner, rewardPerWinner),
-                "Reward transfer failed"
-            );
+            _transferReward(campaign, winner, rewardPerWinner);
 
             participants[_campaignId][winner].rewardClaimed = true;
             totalDistributed += rewardPerWinner;
-
-            // Track total earnings for the winner
             totalEarnings[winner] += rewardPerWinner;
 
             emit RewardDistributed(
                 _campaignId,
                 winner,
                 rewardPerWinner,
-                RewardDistributionMethod.LuckyDraw
+                campaign.distributionMethod
             );
         }
 
-        winners[_campaignId] = selectedWinners;
-        emit WinnersSelected(_campaignId, selectedWinners);
+        _distributeGuaranteedRewards(selectedWinners);
+
+        if (winnersCount < eligibleParticipants.length) {
+            winners[_campaignId] = selectedWinners;
+            emit WinnersSelected(_campaignId, selectedWinners);
+        }
 
         return totalDistributed;
     }
 
     /**
-     * @dev Equal distribution among all participants
+     * @dev Transfer reward to recipient
      */
-    function _distributeEqual(uint256 _campaignId) internal returns (uint256) {
-        Campaign storage campaign = campaigns[_campaignId];
-        address[] memory participantList = participantLists[_campaignId];
-
-        require(participantList.length > 0, "No participants");
-
-        // Filter participants with at least 60 quest points
-        address[] memory eligibleParticipants = new address[](
-            participantList.length
-        );
-        uint256 eligibleCount = 0;
-
-        for (uint256 i = 0; i < participantList.length; i++) {
-            address participant = participantList[i];
-            if (participants[_campaignId][participant].questScore >= 60) {
-                eligibleParticipants[eligibleCount] = participant;
-                eligibleCount++;
-            }
-        }
-
-        require(
-            eligibleCount > 0,
-            "No eligible participants (need 60+ quest points)"
-        );
-
-        uint256 rewardPerParticipant = campaign.totalRewardAmount /
-            eligibleCount;
-        uint256 totalDistributed = 0;
-
-        for (uint256 i = 0; i < eligibleCount; i++) {
-            address participant = eligibleParticipants[i];
-
+    function _transferReward(
+        Campaign storage campaign,
+        address recipient,
+        uint256 amount
+    ) internal {
+        if (address(campaign.rewardToken) == address(0)) {
+            (bool success, ) = recipient.call{value: amount}("");
+            require(success, "SEI reward transfer failed");
+        } else {
             require(
-                campaign.rewardToken.transfer(
-                    participant,
-                    rewardPerParticipant
-                ),
-                "Reward transfer failed"
-            );
-
-            participants[_campaignId][participant].rewardClaimed = true;
-            totalDistributed += rewardPerParticipant;
-
-            // Track total earnings for the participant
-            totalEarnings[participant] += rewardPerParticipant;
-
-            emit RewardDistributed(
-                _campaignId,
-                participant,
-                rewardPerParticipant,
-                RewardDistributionMethod.EqualDistribution
+                campaign.rewardToken.transfer(recipient, amount),
+                "Reward token transfer failed"
             );
         }
-
-        return totalDistributed;
     }
 
     // ============ VIEW FUNCTIONS ============
 
-    /**
-     * @dev Get campaign details
-     */
     function getCampaign(
         uint256 _campaignId
     ) external view returns (Campaign memory) {
         return campaigns[_campaignId];
     }
 
-    /**
-     * @dev Get participant details
-     */
     function getParticipant(
         uint256 _campaignId,
         address _participant
@@ -594,34 +768,24 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
         return participants[_campaignId][_participant];
     }
 
-    /**
-     * @dev Get all participants for a campaign
-     */
     function getParticipants(
         uint256 _campaignId
     ) external view returns (address[] memory) {
         return participantLists[_campaignId];
     }
 
-    /**
-     * @dev Get winners for a lucky draw campaign
-     */
     function getWinners(
         uint256 _campaignId
     ) external view returns (address[] memory) {
         return winners[_campaignId];
     }
 
-    /**
-     * @dev Check if user is eligible for rewards
-     */
     function isEligibleForReward(
         uint256 _campaignId,
         address _user
     ) external view returns (bool) {
         Campaign memory campaign = campaigns[_campaignId];
         Participant memory participant = participants[_campaignId][_user];
-
         return
             participant.isParticipant &&
             campaign.status == CampaignStatus.Ended &&
@@ -630,10 +794,6 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
 
     // ============ ADMIN FUNCTIONS ============
 
-    /**
-     * @dev Add supported token (only owner can call, but restricted to SEI and USDC)
-     * Note: This function is kept for interface compatibility but only allows setting SEI and USDC
-     */
     function addSupportedToken(address _token) external onlyOwner {
         require(
             _token == NATIVE_TOKEN || _token == USDC_ADDRESS,
@@ -642,10 +802,6 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
         supportedTokens[_token] = true;
     }
 
-    /**
-     * @dev Remove supported token (only owner can call)
-     * Note: Cannot remove SEI or USDC as they are core supported tokens
-     */
     function removeSupportedToken(address _token) external onlyOwner {
         require(
             _token != NATIVE_TOKEN && _token != USDC_ADDRESS,
@@ -654,38 +810,50 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
         supportedTokens[_token] = false;
     }
 
-    /**
-     * @dev Update treasury address
-     */
-    function updateTreasury(address _newTreasury) external onlyOwner {
-        require(_newTreasury != address(0), "Invalid treasury address");
-        treasury = _newTreasury;
-    }
-
-    /**
-     * @dev Update guaranteed reward per user
-     */
     function updateGuaranteedReward(uint256 _newAmount) external onlyOwner {
         guaranteedRewardPerUser = _newAmount;
     }
 
-    /**
-     * @dev Emergency pause
-     */
     function pause() external onlyOwner {
         _pause();
     }
 
-    /**
-     * @dev Unpause
-     */
     function unpause() external onlyOwner {
         _unpause();
     }
 
-    /**
-     * @dev Emergency withdrawal (only for stuck tokens)
-     */
+    function withdrawPlatformFees(
+        address _token,
+        uint256 _amount,
+        address _to
+    ) external onlyOwner {
+        require(_to != address(0), "Invalid recipient address");
+        require(_amount > 0, "Amount must be greater than 0");
+        require(
+            _amount <= platformFeeVault[_token],
+            "Insufficient vault balance"
+        );
+
+        platformFeeVault[_token] -= _amount;
+
+        if (_token == address(0)) {
+            payable(_to).transfer(_amount);
+        } else {
+            require(
+                IERC20(_token).transfer(_to, _amount),
+                "Token transfer failed"
+            );
+        }
+
+        emit PlatformFeeWithdrawn(_token, _amount, _to);
+    }
+
+    function getPlatformFeeBalance(
+        address _token
+    ) external view returns (uint256) {
+        return platformFeeVault[_token];
+    }
+
     function emergencyWithdraw(
         address _token,
         uint256 _amount
@@ -698,36 +866,23 @@ contract QuestRewardsContract is ReentrancyGuard, Ownable, Pausable {
 
     // ============ QUEST POINTS VIEW FUNCTIONS ============
 
-    /**
-     * @dev Get user's total accumulated quest points across all campaigns
-     */
     function getUserTotalQuestPoints(
         address _user
     ) external view returns (uint256) {
         return totalQuestPoints[_user];
     }
 
-    /**
-     * @dev Get user's total earnings across all campaigns (in smallest token unit)
-     */
     function getUserTotalEarnings(
         address _user
     ) external view returns (uint256) {
         return totalEarnings[_user];
     }
 
-    /**
-     * @dev Calculate user's level based on total quest points
-     * Level increases every 500 QP
-     */
     function getUserLevel(address _user) external view returns (uint256) {
         uint256 qp = totalQuestPoints[_user];
-        return (qp / 500) + 1; // Level 1 at 0 QP, Level 2 at 500 QP, etc.
+        return (qp / 500) + 1;
     }
 
-    /**
-     * @dev Get QP needed for next level
-     */
     function getQPForNextLevel(address _user) external view returns (uint256) {
         uint256 qp = totalQuestPoints[_user];
         uint256 currentLevel = (qp / 500) + 1;

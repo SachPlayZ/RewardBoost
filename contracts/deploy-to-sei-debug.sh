@@ -57,7 +57,6 @@ if [ ! -f ".env" ]; then
     print_error ".env file not found!"
     print_info "Please create .env file with:"
     echo "PRIVATE_KEY=your_private_key_without_0x_prefix"
-    echo "TREASURY_ADDRESS=your_treasury_address (will be auto-set if deploying treasury first)"
     print_info "You can copy from: env.deployment.example"
     exit 1
 fi
@@ -97,7 +96,7 @@ print_info "Private key length: ${#PRIVATE_KEY} characters"
 # Set defaults for missing variables
 TREASURY_ADDRESS=${TREASURY_ADDRESS:-""}  # Will be set during deployment
 CHAIN_ID=${CHAIN_ID:-1329}
-USDC_ADDRESS=${USDC_ADDRESS:-"0x3894085Ef7Ff0f0aeDf52E2A2704928d259f0C4C"}
+USDC_ADDRESS=${USDC_ADDRESS:-"0x4fCF1784B31630811181f670Aea7A7bEF803eaED"}
 
 print_info "Configuration:"
 print_info "  SEI_RPC: $SEI_RPC"
@@ -170,67 +169,11 @@ fi
 
 print_success "Build completed successfully"
 
-# Deploy Treasury first
-print_header "Deploying Treasury Contract"
+# Deploy Main Contract
+print_header "Deploying QuestRewardsContract with Internal Vault"
 
-print_info "Deploying treasury..."
-print_info "Command: forge script script/DeployQuestRewards.sol:DeployTreasury --rpc-url $SEI_RPC --broadcast"
-
-TREASURY_TX=$(forge script script/DeployQuestRewards.sol:DeployTreasury \
-    --rpc-url $SEI_RPC \
-    --broadcast 2>&1)
-
-TREASURY_EXIT_CODE=$?
-
-echo "Treasury deployment output:"
-echo "$TREASURY_TX"
-
-if [ $TREASURY_EXIT_CODE -ne 0 ]; then
-    print_error "Treasury deployment failed with exit code $TREASURY_EXIT_CODE!"
-    print_info "Common issues:"
-    echo "1. Check your private key is correct (with or without 0x prefix)"
-    echo "2. Ensure you have enough SEI (need ~0.01 SEI)"
-    echo "3. Check if SEI RPC is accessible: curl -s $SEI_RPC"
-    echo "4. Check if you have enough SEI for gas fees"
-    echo "5. Verify your .env file has the correct PRIVATE_KEY value"
-    exit 1
-fi
-
-# Extract treasury address from output
-TREASURY_ADDRESS=$(echo "$TREASURY_TX" | grep "Treasury deployed at:" | awk '{print $4}' | tr -d '\n' || echo "")
-
-if [ -z "$TREASURY_ADDRESS" ] || [ "$TREASURY_ADDRESS" = "0x0000000000000000000000000000000000000000" ]; then
-    print_error "Could not extract treasury address from deployment output"
-    print_info "Looking for 'Treasury deployed at:' in output..."
-    echo "Full output was:"
-    echo "$TREASURY_TX"
-    exit 1
-fi
-
-print_success "Treasury deployed at: $TREASURY_ADDRESS"
-
-# Update .env with treasury address
-print_info "Updating .env file with treasury address..."
-if grep -q "TREASURY_ADDRESS=" .env; then
-    sed -i.bak "s/TREASURY_ADDRESS=.*/TREASURY_ADDRESS=$TREASURY_ADDRESS/" .env
-else
-    echo "TREASURY_ADDRESS=$TREASURY_ADDRESS" >> .env
-fi
-print_info "Updated .env with treasury address"
-
-# Verify treasury deployment
-print_info "Verifying treasury deployment..."
-TREASURY_CODE=$(cast code $TREASURY_ADDRESS --rpc-url $SEI_RPC 2>&1)
-if [ $? -ne 0 ]; then
-    print_warning "Could not verify treasury code, but deployment may have succeeded"
-    echo "Verification output: $TREASURY_CODE"
-fi
-
-# Deploy main contract
-print_header "Deploying QuestRewardsContract"
-
-print_info "Deploying main contract..."
-print_info "Using treasury address: $TREASURY_ADDRESS"
+print_info "Deploying main contract with internal platform fee vault system..."
+print_info "Command: forge script script/DeployQuestRewards.sol:DeployQuestRewards --rpc-url $SEI_RPC --broadcast"
 
 MAIN_TX=$(forge script script/DeployQuestRewards.sol:DeployQuestRewards \
     --rpc-url $SEI_RPC \
@@ -244,10 +187,11 @@ echo "$MAIN_TX"
 if [ $MAIN_EXIT_CODE -ne 0 ]; then
     print_error "Main contract deployment failed with exit code $MAIN_EXIT_CODE!"
     print_info "Common issues:"
-    echo "1. Treasury deployment might have failed (check above)"
-    echo "2. Check if you have enough SEI for gas fees"
-    echo "3. Check if you still have enough SEI after treasury deployment"
-    echo "4. Verify PRIVATE_KEY in .env file is correct"
+    echo "1. Check your private key is correct (with or without 0x prefix)"
+    echo "2. Ensure you have enough SEI (need ~0.01 SEI)"
+    echo "3. Check if SEI RPC is accessible: curl -s $SEI_RPC"
+    echo "4. Check if you have enough SEI for gas fees"
+    echo "5. Verify your .env file has the correct PRIVATE_KEY value"
     exit 1
 fi
 
@@ -275,7 +219,6 @@ cat > "$DEPLOYMENT_FILE" << EOF
   "rpcUrl": "$SEI_RPC",
   "deployer": "$DEPLOYER_ADDRESS",
   "contracts": {
-    "treasury": "$TREASURY_ADDRESS",
     "questRewards": "$MAIN_ADDRESS"
   },
   "deploymentDate": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
@@ -296,7 +239,6 @@ echo "Chain ID: $CHAIN_ID"
 echo "Explorer: https://seitrace.com"
 echo ""
 echo "Contracts:"
-echo "  Treasury: $TREASURY_ADDRESS"
 echo "  QuestRewardsContract: $MAIN_ADDRESS"
 echo ""
 echo "Deployment file: $DEPLOYMENT_FILE"
@@ -306,7 +248,6 @@ echo "export const SEI_CONFIG = {"
 echo "  chainId: $CHAIN_ID,"
 echo "  rpcUrl: '$SEI_RPC',"
 echo "  contracts: {"
-echo "    treasury: '$TREASURY_ADDRESS',"
 echo "    questRewards: '$MAIN_ADDRESS'"
 echo "  },"
 echo "  tokens: {"
@@ -316,14 +257,8 @@ echo "  }"
 echo "};"
 
 print_header "Verification Commands"
-echo "# Check treasury owner:"
-echo "cast call $TREASURY_ADDRESS \"owner()\" --rpc-url $SEI_RPC"
-echo ""
 echo "# Check main contract owner:"
 echo "cast call $MAIN_ADDRESS \"owner()\" --rpc-url $SEI_RPC"
-echo ""
-echo "# Check treasury address in main contract:"
-echo "cast call $MAIN_ADDRESS \"treasury()\" --rpc-url $SEI_RPC"
 echo ""
 echo "# Create test campaign (100 SEI reward, 3 winners):"
 echo "cast send $MAIN_ADDRESS \"createCampaign(address,uint8,uint256,uint256,uint256,uint256,uint256)\" \\"

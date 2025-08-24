@@ -1,0 +1,15 @@
+{
+  "network": "SEI Testnet",
+  "chainId": 1328,
+  "rpcUrl": "https://evm-rpc-testnet.sei-apis.com",
+  "deployer": "0xe34b40f38217f9Dc8c3534735f7f41B2cDA73A75",
+  "contracts": {
+    "questRewards": "0x8fF00cED35C26EA1dC89F8B730F7949aC15F4116"
+  },
+  "deploymentDate": "2025-08-22T20:33:38Z",
+  "explorerUrl": "https://seitrace.com",
+  "environment": {
+    "balanceBefore": "8.787920 SEI",
+    "usdcAddress": "0x4fCF1784B31630811181f670Aea7A7bEF803eaED"
+  }
+}
