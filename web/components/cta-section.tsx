@@ -146,17 +146,17 @@ export function CTASection() {
       <div className="relative z-10 flex flex-col justify-start items-center gap-9 max-w-4xl mx-auto">
         <div className="flex flex-col justify-start items-center gap-4 text-center">
           <h2 className="text-foreground text-3xl md:text-5xl lg:text-[68px] font-semibold leading-tight md:leading-tight lg:leading-[76px] max-w-[600px]">
-            Start Your
+            Ready to Boost
             <br className="hidden md:inline" />
-            Content Empire
+            Your Rewards?
           </h2>
           <p className="text-muted-foreground text-sm md:text-base font-medium leading-[18.20px] md:leading-relaxed break-words max-w-2xl">
-            Join thousands of Web3 creators using ContentFlow to automate viral
-            content, run fair campaigns, and build thriving communities.
+            Join thousands of brands and creators who are already using
+            RewardBoost to revolutionize their social media presence.
           </p>
         </div>
         <Link
-          href="https://app.contentflow.xyz"
+          href="https://rewardboost.xyz"
           target="_blank"
           rel="noopener noreferrer"
         >

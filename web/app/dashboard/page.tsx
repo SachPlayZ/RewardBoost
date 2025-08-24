@@ -259,16 +259,13 @@ export default function DashboardPage() {
                                     <h3 className="font-bold text-xl mb-1">
                                       {campaign.title}
                                     </h3>
-                                    <p className="text-sm opacity-90">
-                                      {campaign.description}
-                                    </p>
                                   </div>
                                   <div className="absolute -bottom-10 right-4">
                                     <Avatar className="h-20 w-20 border-3 border-white shadow-lg">
                                       <AvatarImage
                                         src={
                                           campaign.organizationLogo ||
-                                          "/placeholder-logo.png"
+                                          "/logo.png"
                                         }
                                       />
                                       <AvatarFallback className="text-white bg-black/50 text-lg">
@@ -417,16 +414,13 @@ export default function DashboardPage() {
                                     <h3 className="font-bold text-xl mb-1">
                                       {campaign.title}
                                     </h3>
-                                    <p className="text-sm opacity-90">
-                                      {campaign.description}
-                                    </p>
                                   </div>
                                   <div className="absolute -bottom-10 right-4">
                                     <Avatar className="h-20 w-20 border-3 border-white shadow-lg">
                                       <AvatarImage
                                         src={
                                           campaign.organizationLogo ||
-                                          "/placeholder-logo.png"
+                                          "/logo.png"
                                         }
                                       />
                                       <AvatarFallback className="text-white bg-black/50 text-lg">
@@ -555,16 +549,13 @@ export default function DashboardPage() {
                                     <h3 className="font-bold text-xl mb-1">
                                       {campaign.title}
                                     </h3>
-                                    <p className="text-sm opacity-90">
-                                      {campaign.description}
-                                    </p>
                                   </div>
                                   <div className="absolute -bottom-10 right-4">
                                     <Avatar className="h-20 w-20 border-3 border-white shadow-lg">
                                       <AvatarImage
                                         src={
                                           campaign.organizationLogo ||
-                                          "/placeholder-logo.png"
+                                          "/logo.png"
                                         }
                                       />
                                       <AvatarFallback className="text-white bg-black/50 text-lg">

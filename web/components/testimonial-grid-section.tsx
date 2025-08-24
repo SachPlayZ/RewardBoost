@@ -3,7 +3,7 @@ import Image from "next/image";
 const testimonials = [
   {
     quote:
-      "ContentFlow's AI generated content that got us 10x more engagement on Twitter. The smart contract rewards system helped us build a loyal community of 50K+ followers in just 3 months.",
+      "RewardBoost's AI generated content that got us 10x more engagement on Twitter. The smart contract rewards system helped us build a loyal community of 50K+ followers in just 3 months.",
     name: "Annette Black",
     company: "DeFi Protocol",
     avatar: "/images/avatars/annette-black.png",
@@ -35,7 +35,7 @@ const testimonials = [
   },
   {
     quote:
-      "From zero to viral in weeks. ContentFlow's AI understands crypto Twitter better than most humans. Our community growth is insane.",
+      "From zero to viral in weeks. RewardBoost's AI understands crypto Twitter better than most humans. Our community growth is insane.",
     name: "Darlene Robertson",
     company: "Web3 Platform",
     avatar: "/images/avatars/darlene-robertson.png",
@@ -51,7 +51,7 @@ const testimonials = [
   },
   {
     quote:
-      "ContentFlow transformed our marketing from manual posting to an automated content empire. The smart contracts handle all rewards fairly, and our community trusts the process completely.",
+      "RewardBoost transformed our marketing from manual posting to an automated content empire. The smart contracts handle all rewards fairly, and our community trusts the process completely.",
     name: "Albert Flores",
     company: "Layer 1 Blockchain",
     avatar: "/images/avatars/albert-flores.png",
@@ -156,7 +156,7 @@ export function TestimonialGridSection() {
             }{" "}
             <br />{" "}
             {
-              "generating viral content, and running fair reward campaigns with ContentFlow"
+              "generating viral content, and running fair reward campaigns with RewardBoost"
             }
           </p>
         </div>

@@ -27,11 +27,24 @@ const Navigation = () => {
       href: "/",
       label: "Home",
       icon: Home,
+      requiresAuth: false,
+    },
+    {
+      href: "/profile",
+      label: "My Profile",
+      icon: Settings,
+      requiresAuth: true,
     },
     {
       href: "/dashboard",
-      label: "Dashboard",
+      label: "Quests",
       icon: LayoutDashboard,
+      requiresAuth: true,
+    },
+    {
+      href: "/campaigns",
+      label: "Campaigns",
+      icon: Target,
       requiresAuth: true,
     },
     {
@@ -56,9 +69,11 @@ const Navigation = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <Target className="h-4 w-4 text-white" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="Reward Boost logo"
+                className="h-8 w-8"
+              />
               <span className="font-bold text-xl">Reward Boost</span>
             </div>
           </Link>

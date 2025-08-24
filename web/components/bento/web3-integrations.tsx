@@ -1,4 +1,4 @@
-import type React from "react"
+import type React from "react";
 
 const Web3Integrations: React.FC = () => {
   const themeVars = {
@@ -8,16 +8,20 @@ const Web3Integrations: React.FC = () => {
     "--web3-text-muted": "hsl(var(--muted-foreground))",
     "--web3-border-color": "hsl(var(--border))",
     "--web3-card-bg": "hsl(var(--card) / 0.8)",
-  }
+  };
 
   const integrations = [
     { name: "Twitter", status: "connected", color: "#1DA1F2" },
     { name: "Discord", status: "connected", color: "#5865F2" },
-    { name: "Sei Network", status: "connected", color: "var(--web3-primary-color)" },
+    {
+      name: "Sei Network",
+      status: "connected",
+      color: "var(--web3-primary-color)",
+    },
     { name: "Telegram", status: "pending", color: "#0088cc" },
     { name: "MetaMask", status: "connected", color: "#f6851b" },
     { name: "WalletConnect", status: "available", color: "#3b99fc" },
-  ]
+  ];
 
   return (
     <div
@@ -52,7 +56,14 @@ const Web3Integrations: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
           <div
             style={{
               width: "16px",
@@ -86,7 +97,13 @@ const Web3Integrations: React.FC = () => {
         </div>
 
         {/* Integration Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "8px",
+          }}
+        >
           {integrations.map((integration, index) => (
             <div
               key={index}
@@ -144,8 +161,8 @@ const Web3Integrations: React.FC = () => {
                       integration.status === "connected"
                         ? "#22c55e"
                         : integration.status === "pending"
-                          ? "#f59e0b"
-                          : "var(--web3-text-muted)",
+                        ? "#f59e0b"
+                        : "var(--web3-text-muted)",
                     fontWeight: 500,
                     textTransform: "uppercase",
                   }}
@@ -169,7 +186,7 @@ const Web3Integrations: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Web3Integrations
+export default Web3Integrations;

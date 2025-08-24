@@ -1,10 +1,10 @@
-import TwitterContentGenerator from "./bento/twitter-content-generator"
-import CampaignAnalytics from "./bento/campaign-analytics"
-import Web3Integrations from "./bento/web3-integrations"
-import SmartContractRewards from "./bento/smart-contract-rewards"
-import MultiAgentContent from "./bento/multi-agent-content"
-import ContentScheduler from "./bento/content-scheduler"
-import { AnimatedSection } from "./animated-section"
+import DoubleRewards from "./bento/double-rewards";
+import AIBrandCampaigns from "./bento/ai-brand-campaigns";
+import TwitterContentGenerator from "./bento/twitter-content-generator";
+import SmartContractRewards from "./bento/smart-contract-rewards";
+import FullyDecentralized from "./bento/fully-decentralized";
+import MultiLanguageSupport from "./bento/multi-language-support";
+import { AnimatedSection } from "./animated-section";
 
 const BentoCard = ({ title, description, Component, delay = 0 }) => (
   <AnimatedSection direction="up" delay={delay} className="h-full">
@@ -34,41 +34,47 @@ const BentoCard = ({ title, description, Component, delay = 0 }) => (
       </div>
     </div>
   </AnimatedSection>
-)
+);
 
 export function BentoSection() {
   const cards = [
     {
-      title: "AI-powered content generation.",
-      description: "Create viral Twitter threads and posts automatically.",
+      title: "Double Rewards",
+      description:
+        "Every user who completes a quest receives both pool rewards from the campaign and guaranteed platform rewards",
+      Component: DoubleRewards,
+    },
+    {
+      title: "AI Assisted Brand Campaigns",
+      description:
+        "Brands can create AI-powered campaign ideas and reward authentic user participation across the platform.",
+      Component: AIBrandCampaigns,
+    },
+    {
+      title: "AI Tweet Generation",
+      description:
+        "Generate engaging tweets in any language with advanced AI. Perfect for consistent content creation and brand campaigns.",
       Component: TwitterContentGenerator,
     },
     {
-      title: "Real-time campaign analytics",
-      description: "Track engagement, reach, and reward distribution live.",
-      Component: CampaignAnalytics,
-    },
-    {
-      title: "Web3 platform integrations",
-      description: "Connect with Twitter, Discord, and blockchain networks.",
-      Component: Web3Integrations,
-    },
-    {
-      title: "Smart contract automation",
-      description: "Deploy fair reward systems and lotteries on Sei Network.",
+      title: "Onchain Rewards",
+      description:
+        "Earn cryptocurrency rewards for authentic engagement. All transactions are transparent and verifiable on the blockchain.",
       Component: SmartContractRewards,
     },
     {
-      title: "Multi-agent content creation",
-      description: "Run parallel AI agents for different content strategies.",
-      Component: MultiAgentContent,
+      title: "Fully Decentralized",
+      description:
+        "No central authority controls your rewards. Smart contracts ensure fair distribution and transparent participation.",
+      Component: FullyDecentralized,
     },
     {
-      title: "Instant campaign deployment",
-      description: "Launch reward campaigns and content flows in minutes.",
-      Component: ContentScheduler,
+      title: "Multi-Language Support",
+      description:
+        "Create content in any language to reach global audiences. Break down language barriers with AI assistance.",
+      Component: MultiLanguageSupport,
     },
-  ]
+  ];
 
   return (
     <section className="w-full px-5 flex flex-col justify-center items-center overflow-visible bg-transparent">
@@ -78,11 +84,11 @@ export function BentoSection() {
         <AnimatedSection className="self-stretch py-8 md:py-14 flex flex-col justify-center items-center gap-2 z-10">
           <div className="flex flex-col justify-start items-center gap-4">
             <h2 className="w-full max-w-[655px] text-center text-foreground text-4xl md:text-6xl font-semibold leading-tight md:leading-[66px]">
-              Automate Your Content Empire
+              Powerful Features
             </h2>
             <p className="w-full max-w-[600px] text-center text-muted-foreground text-lg md:text-xl font-medium leading-relaxed">
-              Generate viral content, run fair campaigns, and reward your community with blockchain-powered automation
-              on Sei Network.
+              Everything you need to grow your social presence and earn rewards
+              fairly
             </p>
           </div>
         </AnimatedSection>
@@ -94,5 +100,5 @@ export function BentoSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

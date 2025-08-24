@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { AnimatedSection } from "./animated-section"
-import { BarChart3, Bot, Calendar, Zap, Twitter, Shield } from "lucide-react"
+import { AnimatedSection } from "./animated-section";
+import { BarChart3, Bot, Calendar, Zap, Twitter, Shield } from "lucide-react";
 
 const DashboardComponent = () => {
   const themeVars = {
@@ -11,7 +11,7 @@ const DashboardComponent = () => {
     "--dashboard-muted": "hsl(var(--muted-foreground))",
     "--dashboard-border": "hsl(var(--border))",
     "--dashboard-card": "hsl(var(--card) / 0.8)",
-  }
+  };
 
   return (
     <div
@@ -34,7 +34,8 @@ const DashboardComponent = () => {
             background: `conic-gradient(from 0deg, var(--dashboard-primary), var(--dashboard-primary)40, transparent, var(--dashboard-primary))`,
             mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
             maskComposite: "xor",
-            WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+            WebkitMask:
+              "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
             WebkitMaskComposite: "xor",
             padding: "2px",
           }}
@@ -46,12 +47,18 @@ const DashboardComponent = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">ContentFlow Dashboard</h1>
-            <p className="text-muted-foreground">Web3 Content & Campaign Management</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              RewardBoost Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Web3 Content & Campaign Management
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-primary/20 px-3 py-1 rounded-full">
-              <span className="text-primary text-sm font-medium">Sei Network</span>
+              <span className="text-primary text-sm font-medium">
+                Sei Network
+              </span>
             </div>
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
           </div>
@@ -63,11 +70,14 @@ const DashboardComponent = () => {
           <div className="col-span-5 bg-card/50 backdrop-blur-sm rounded-xl p-4 border border-border">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground">AI Content Generator</h3>
+              <h3 className="font-semibold text-foreground">
+                AI Content Generator
+              </h3>
             </div>
             <div className="bg-background/50 rounded-lg p-3 mb-4">
               <div className="text-sm text-foreground mb-2">
-                🚀 The future of DeFi is here! Our new yield farming protocol just launched on @SeiNetwork with:
+                🚀 The future of DeFi is here! Our new yield farming protocol
+                just launched on @SeiNetwork with:
               </div>
               <div className="text-xs text-muted-foreground">
                 ✅ 150% APY
@@ -79,7 +89,9 @@ const DashboardComponent = () => {
               <button className="bg-primary text-primary-foreground px-3 py-1 rounded text-xs font-medium">
                 Generate More
               </button>
-              <button className="border border-border px-3 py-1 rounded text-xs">Schedule</button>
+              <button className="border border-border px-3 py-1 rounded text-xs">
+                Schedule
+              </button>
             </div>
           </div>
 
@@ -87,7 +99,9 @@ const DashboardComponent = () => {
           <div className="col-span-4 bg-card/50 backdrop-blur-sm rounded-xl p-4 border border-border">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground">Campaign Analytics</h3>
+              <h3 className="font-semibold text-foreground">
+                Campaign Analytics
+              </h3>
             </div>
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-background/50 rounded-lg p-3">
@@ -102,13 +116,15 @@ const DashboardComponent = () => {
               </div>
             </div>
             <div className="bg-background/30 rounded-lg p-2 h-16 flex items-end gap-1">
-              {[40, 65, 45, 80, 55, 90, 70, 85, 60, 95, 75, 88].map((height, i) => (
-                <div
-                  key={i}
-                  className="flex-1 bg-gradient-to-t from-primary to-primary/60 rounded-sm"
-                  style={{ height: `${height}%` }}
-                />
-              ))}
+              {[40, 65, 45, 80, 55, 90, 70, 85, 60, 95, 75, 88].map(
+                (height, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 bg-gradient-to-t from-primary to-primary/60 rounded-sm"
+                    style={{ height: `${height}%` }}
+                  />
+                )
+              )}
             </div>
           </div>
 
@@ -116,15 +132,24 @@ const DashboardComponent = () => {
           <div className="col-span-3 bg-card/50 backdrop-blur-sm rounded-xl p-4 border border-border">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground text-sm">Reward Contracts</h3>
+              <h3 className="font-semibold text-foreground text-sm">
+                Reward Contracts
+              </h3>
             </div>
             <div className="bg-background/50 rounded-lg p-3 mb-3">
-              <div className="text-xs text-muted-foreground mb-2">Active Pool</div>
+              <div className="text-xs text-muted-foreground mb-2">
+                Active Pool
+              </div>
               <div className="text-lg font-bold text-primary">50,000 SEI</div>
-              <div className="text-xs text-muted-foreground">1,247 participants</div>
+              <div className="text-xs text-muted-foreground">
+                1,247 participants
+              </div>
             </div>
             <div className="bg-background/30 rounded h-2 mb-3">
-              <div className="bg-primary h-full rounded" style={{ width: "73%" }} />
+              <div
+                className="bg-primary h-full rounded"
+                style={{ width: "73%" }}
+              />
             </div>
             <button className="w-full bg-primary text-primary-foreground py-2 rounded text-xs font-medium">
               Distribute Rewards
@@ -135,17 +160,38 @@ const DashboardComponent = () => {
           <div className="col-span-4 bg-card/50 backdrop-blur-sm rounded-xl p-4 border border-border">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground">Content Schedule</h3>
+              <h3 className="font-semibold text-foreground">
+                Content Schedule
+              </h3>
             </div>
             <div className="space-y-2">
               {[
-                { time: "2:00 PM", content: "🚀 New DeFi protocol launching...", status: "scheduled" },
-                { time: "4:30 PM", content: "💎 Diamond hands holding strong...", status: "scheduled" },
-                { time: "7:00 PM", content: "🌙 GM crypto fam! Today's alpha...", status: "pending" },
+                {
+                  time: "2:00 PM",
+                  content: "🚀 New DeFi protocol launching...",
+                  status: "scheduled",
+                },
+                {
+                  time: "4:30 PM",
+                  content: "💎 Diamond hands holding strong...",
+                  status: "scheduled",
+                },
+                {
+                  time: "7:00 PM",
+                  content: "🌙 GM crypto fam! Today's alpha...",
+                  status: "pending",
+                },
               ].map((post, i) => (
-                <div key={i} className="bg-background/50 rounded-lg p-2 flex items-center gap-2">
-                  <div className="text-xs text-muted-foreground w-12">{post.time}</div>
-                  <div className="flex-1 text-xs text-foreground truncate">{post.content}</div>
+                <div
+                  key={i}
+                  className="bg-background/50 rounded-lg p-2 flex items-center gap-2"
+                >
+                  <div className="text-xs text-muted-foreground w-12">
+                    {post.time}
+                  </div>
+                  <div className="flex-1 text-xs text-foreground truncate">
+                    {post.content}
+                  </div>
                   <div
                     className={`text-xs px-2 py-1 rounded ${
                       post.status === "scheduled"
@@ -165,20 +211,40 @@ const DashboardComponent = () => {
             <div className="flex items-center gap-2 mb-4">
               <Bot className="w-5 h-5 text-primary" />
               <h3 className="font-semibold text-foreground">AI Agents</h3>
-              <div className="ml-auto bg-green-500/20 text-green-500 text-xs px-2 py-1 rounded">3 ACTIVE</div>
+              <div className="ml-auto bg-green-500/20 text-green-500 text-xs px-2 py-1 rounded">
+                3 ACTIVE
+              </div>
             </div>
             <div className="space-y-2">
               {[
-                { name: "Viral Agent", task: "Creating trending content", progress: 85 },
-                { name: "Community Agent", task: "Engaging followers", progress: 92 },
-                { name: "Analytics Agent", task: "Optimizing performance", progress: 67 },
+                {
+                  name: "Viral Agent",
+                  task: "Creating trending content",
+                  progress: 85,
+                },
+                {
+                  name: "Community Agent",
+                  task: "Engaging followers",
+                  progress: 92,
+                },
+                {
+                  name: "Analytics Agent",
+                  task: "Optimizing performance",
+                  progress: 67,
+                },
               ].map((agent, i) => (
                 <div key={i} className="bg-background/50 rounded-lg p-2">
                   <div className="flex items-center justify-between mb-1">
-                    <div className="text-xs font-medium text-foreground">{agent.name}</div>
-                    <div className="text-xs text-muted-foreground">{agent.progress}%</div>
+                    <div className="text-xs font-medium text-foreground">
+                      {agent.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {agent.progress}%
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mb-2">{agent.task}</div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    {agent.task}
+                  </div>
                   <div className="bg-background/30 rounded h-1">
                     <div
                       className="bg-primary h-full rounded transition-all duration-300"
@@ -203,12 +269,24 @@ const DashboardComponent = () => {
                 { name: "Telegram", status: "pending", color: "#0088cc" },
                 { name: "MetaMask", status: "connected", color: "#f6851b" },
               ].map((integration, i) => (
-                <div key={i} className="bg-background/50 rounded-lg p-2 flex items-center gap-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: integration.color }} />
+                <div
+                  key={i}
+                  className="bg-background/50 rounded-lg p-2 flex items-center gap-2"
+                >
+                  <div
+                    className="w-3 h-3 rounded"
+                    style={{ backgroundColor: integration.color }}
+                  />
                   <div className="flex-1">
-                    <div className="text-xs font-medium text-foreground">{integration.name}</div>
+                    <div className="text-xs font-medium text-foreground">
+                      {integration.name}
+                    </div>
                     <div
-                      className={`text-xs ${integration.status === "connected" ? "text-green-500" : "text-yellow-500"}`}
+                      className={`text-xs ${
+                        integration.status === "connected"
+                          ? "text-green-500"
+                          : "text-yellow-500"
+                      }`}
                     >
                       {integration.status}
                     </div>
@@ -234,8 +312,8 @@ const DashboardComponent = () => {
         }
       `}</style>
     </div>
-  )
-}
+  );
+};
 
 export function DashboardPreview() {
   return (
@@ -246,5 +324,5 @@ export function DashboardPreview() {
         </div>
       </div>
     </AnimatedSection>
-  )
+  );
 }

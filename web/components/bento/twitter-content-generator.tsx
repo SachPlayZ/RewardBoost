@@ -1,5 +1,5 @@
-import type React from "react"
-import { Sparkles, Calendar, TrendingUp } from "lucide-react"
+import type React from "react";
+import { Sparkles, Calendar, TrendingUp } from "lucide-react";
 
 const TwitterContentGenerator: React.FC = () => {
   const themeVars = {
@@ -9,7 +9,7 @@ const TwitterContentGenerator: React.FC = () => {
     "--twitter-text-muted": "hsl(var(--muted-foreground))",
     "--twitter-border-color": "hsl(var(--border))",
     "--twitter-card-bg": "hsl(var(--card) / 0.8)",
-  }
+  };
 
   return (
     <div
@@ -44,7 +44,14 @@ const TwitterContentGenerator: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "12px",
+          }}
+        >
           <Sparkles size={16} color="var(--twitter-primary-color)" />
           <span
             style={{
@@ -77,7 +84,8 @@ const TwitterContentGenerator: React.FC = () => {
               marginBottom: "8px",
             }}
           >
-            🚀 The future of DeFi is here! Our new yield farming protocol just launched on @SeiNetwork with:
+            🚀 The future of DeFi is here! Our new yield farming protocol just
+            launched on @SeiNetwork with:
             <br />
             <br />✅ 150% APY
             <br />✅ Zero impermanent loss
@@ -165,7 +173,7 @@ const TwitterContentGenerator: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TwitterContentGenerator
+export default TwitterContentGenerator;

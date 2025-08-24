@@ -1,5 +1,5 @@
-import type React from "react"
-import { Calendar, Clock, Send } from "lucide-react"
+import type React from "react";
+import { Calendar, Clock, Send } from "lucide-react";
 
 const ContentScheduler: React.FC = () => {
   const themeVars = {
@@ -9,13 +9,25 @@ const ContentScheduler: React.FC = () => {
     "--scheduler-text-muted": "hsl(var(--muted-foreground))",
     "--scheduler-border-color": "hsl(var(--border))",
     "--scheduler-card-bg": "hsl(var(--card) / 0.8)",
-  }
+  };
 
   const scheduledPosts = [
-    { time: "2:00 PM", content: "🚀 New DeFi protocol launching...", status: "scheduled" },
-    { time: "4:30 PM", content: "💎 Diamond hands holding strong...", status: "scheduled" },
-    { time: "7:00 PM", content: "🌙 GM crypto fam! Today's alpha...", status: "pending" },
-  ]
+    {
+      time: "2:00 PM",
+      content: "🚀 New DeFi protocol launching...",
+      status: "scheduled",
+    },
+    {
+      time: "4:30 PM",
+      content: "💎 Diamond hands holding strong...",
+      status: "scheduled",
+    },
+    {
+      time: "7:00 PM",
+      content: "🌙 GM crypto fam! Today's alpha...",
+      status: "pending",
+    },
+  ];
 
   return (
     <div
@@ -50,7 +62,14 @@ const ContentScheduler: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
           <Calendar size={16} color="var(--scheduler-primary-color)" />
           <span
             style={{
@@ -125,7 +144,8 @@ const ContentScheduler: React.FC = () => {
 
               <div
                 style={{
-                  background: post.status === "scheduled" ? "#22c55e20" : "#f59e0b20",
+                  background:
+                    post.status === "scheduled" ? "#22c55e20" : "#f59e0b20",
                   color: post.status === "scheduled" ? "#22c55e" : "#f59e0b",
                   fontSize: "8px",
                   padding: "2px 6px",
@@ -165,7 +185,7 @@ const ContentScheduler: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ContentScheduler
+export default ContentScheduler;

@@ -6,9 +6,9 @@ import { ChevronDown } from "lucide-react"
 
 const faqData = [
   {
-    question: "What is ContentFlow and how does it work?",
+    question: "What is RewardBoost and how does it work?",
     answer:
-      "ContentFlow is an AI-powered platform that automates content creation for Web3 companies and creators. It generates viral Twitter content, manages reward campaigns, and deploys smart contracts on Sei Network for fair community engagement and lottery systems.",
+      "RewardBoost is an AI-powered platform that automates content creation for Web3 companies and creators. It generates viral Twitter content, manages reward campaigns, and deploys smart contracts on Sei Network for fair community engagement and lottery systems.",
   },
   {
     question: "How does the AI content generation work for crypto/Web3?",
@@ -21,9 +21,9 @@ const faqData = [
       "All reward distributions are handled by smart contracts deployed on Sei Network. This ensures complete transparency, prevents manipulation, and allows community members to verify all transactions on-chain. Our lottery systems use verifiable randomness for truly fair outcomes.",
   },
   {
-    question: "Can I integrate ContentFlow with my existing social media accounts?",
+    question: "Can I integrate RewardBoost with my existing social media accounts?",
     answer:
-      "Yes! ContentFlow integrates seamlessly with Twitter, Discord, Telegram, and other major social platforms. You can also connect your existing Web3 tools, analytics platforms, and community management systems through our API.",
+      "Yes! RewardBoost integrates seamlessly with Twitter, Discord, Telegram, and other major social platforms. You can also connect your existing Web3 tools, analytics platforms, and community management systems through our API.",
   },
   {
     question: "How do the smart contracts and lottery systems work?",
@@ -99,7 +99,7 @@ export function FAQSection() {
             Frequently Asked Questions
           </h2>
           <p className="self-stretch text-center text-muted-foreground text-sm font-medium leading-[18.20px] break-words">
-            Everything you need to know about ContentFlow and how it can transform your Web3 content strategy
+            Everything you need to know about RewardBoost and how it can transform your Web3 content strategy
           </p>
         </div>
       </div>

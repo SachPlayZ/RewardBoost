@@ -1,8 +1,13 @@
+"use client";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export function HeroSection() {
+  const { isConnected } = useAccount();
+
   return (
     <section
       className="flex flex-col items-center text-center relative mx-auto rounded-2xl overflow-hidden my-6 py-0 px-4
@@ -588,25 +593,54 @@ export function HeroSection() {
         </svg>
       </div>
 
-      <div className="relative z-10 space-y-4 md:space-y-5 lg:space-y-6 mb-6 md:mb-7 lg:mb-9 max-w-md md:max-w-[500px] lg:max-w-[588px] mt-16 md:mt-[120px] lg:mt-[160px] px-4">
+      <div className="relative z-10 space-y-4 md:space-y-5 lg:space-y-6 mb-6 md:mb-7 lg:mb-9 max-w-md md:max-w-[700px] lg:max-w-[750px] mt-16 md:mt-[120px] lg:mt-[160px] px-4">
         <h1 className="text-foreground text-3xl md:text-4xl lg:text-6xl font-semibold leading-tight">
-          Power the Web3 Content Economy
+          Boost Your Brand with AI-Powered Quests
         </h1>
         <p className="text-muted-foreground text-base md:text-base lg:text-lg font-medium leading-relaxed max-w-lg mx-auto">
-          Automate viral content creation for Twitter, run fair reward
-          campaigns, and build community engagement on Sei Network.
+          Transform your social campaigns with AI-generated content and
+          transparent Web3 rewards that build genuine community engagement.
         </p>
       </div>
 
-      <Link
-        href="https://app.contentflow.xyz"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Button className="relative z-10 bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full font-medium text-base shadow-lg ring-1 ring-white/10">
-          Start Creating Content
-        </Button>
-      </Link>
+      <div className="relative z-10 flex flex-col sm:flex-row gap-4 items-center justify-center">
+        {isConnected ? (
+          <>
+            <Link href="/campaigns/create">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full font-medium text-base shadow-lg ring-1 ring-white/10">
+                Create Quest
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button
+                variant="outline"
+                className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 rounded-full font-medium text-base shadow-lg"
+              >
+                Start Earning
+              </Button>
+            </Link>
+          </>
+        ) : (
+          <>
+            <ConnectButton />
+            <Button
+              variant="outline"
+              className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 rounded-full font-medium text-base shadow-lg"
+              onClick={() => {
+                // This will trigger the ConnectButton's modal
+                const connectButton = document.querySelector(
+                  '[data-testid="rk-connect-button"]'
+                ) as HTMLElement;
+                if (connectButton) {
+                  connectButton.click();
+                }
+              }}
+            >
+              Start Earning
+            </Button>
+          </>
+        )}
+      </div>
     </section>
   );
 }

@@ -1,5 +1,5 @@
-import type React from "react"
-import { Bot, Zap, Target } from "lucide-react"
+import type React from "react";
+import { Bot, Zap, Target } from "lucide-react";
 
 const MultiAgentContent: React.FC = () => {
   const themeVars = {
@@ -9,7 +9,7 @@ const MultiAgentContent: React.FC = () => {
     "--agent-text-muted": "hsl(var(--muted-foreground))",
     "--agent-border-color": "hsl(var(--border))",
     "--agent-card-bg": "hsl(var(--card) / 0.8)",
-  }
+  };
 
   const agents = [
     {
@@ -33,7 +33,7 @@ const MultiAgentContent: React.FC = () => {
       progress: 67,
       icon: <Bot size={12} />,
     },
-  ]
+  ];
 
   return (
     <div
@@ -68,7 +68,14 @@ const MultiAgentContent: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
           <Bot size={16} color="var(--agent-primary-color)" />
           <span
             style={{
@@ -107,7 +114,14 @@ const MultiAgentContent: React.FC = () => {
                 border: "1px solid var(--agent-border-color)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginBottom: "8px",
+                }}
+              >
                 <div
                   style={{
                     background: "var(--agent-primary-color)",
@@ -142,7 +156,8 @@ const MultiAgentContent: React.FC = () => {
 
                 <div
                   style={{
-                    background: agent.status === "active" ? "#22c55e20" : "#f59e0b20",
+                    background:
+                      agent.status === "active" ? "#22c55e20" : "#f59e0b20",
                     color: agent.status === "active" ? "#22c55e" : "#f59e0b",
                     fontSize: "8px",
                     padding: "2px 6px",
@@ -179,7 +194,7 @@ const MultiAgentContent: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MultiAgentContent
+export default MultiAgentContent;

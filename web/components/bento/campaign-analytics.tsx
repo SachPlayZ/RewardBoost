@@ -1,5 +1,5 @@
-import type React from "react"
-import { BarChart3 } from "lucide-react"
+import type React from "react";
+import { BarChart3 } from "lucide-react";
 
 const CampaignAnalytics: React.FC = () => {
   const themeVars = {
@@ -9,7 +9,7 @@ const CampaignAnalytics: React.FC = () => {
     "--analytics-text-muted": "hsl(var(--muted-foreground))",
     "--analytics-border-color": "hsl(var(--border))",
     "--analytics-card-bg": "hsl(var(--card) / 0.8)",
-  }
+  };
 
   return (
     <div
@@ -44,7 +44,14 @@ const CampaignAnalytics: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
           <BarChart3 size={16} color="var(--analytics-primary-color)" />
           <span
             style={{
@@ -59,7 +66,14 @@ const CampaignAnalytics: React.FC = () => {
         </div>
 
         {/* Metrics Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+            marginBottom: "16px",
+          }}
+        >
           <div
             style={{
               background: "hsl(var(--background) / 0.5)",
@@ -196,7 +210,7 @@ const CampaignAnalytics: React.FC = () => {
         </span>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CampaignAnalytics
+export default CampaignAnalytics;

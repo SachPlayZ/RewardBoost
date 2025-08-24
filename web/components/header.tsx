@@ -13,12 +13,15 @@ import {
 import { Menu } from "lucide-react";
 import Link from "next/link"; // Import Link for client-side navigation
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 
 export function Header() {
+  const { isConnected } = useAccount();
+
   const navItems = [
-    { name: "Campaigns", href: "/campaigns" },
-    { name: "Quests", href: "/dashboard" },
-    { name: "My Profile", href: "/profile" },
+    { name: "My Profile", href: "/profile", requiresAuth: true },
+    { name: "Quests", href: "/dashboard", requiresAuth: true },
+    { name: "Campaigns", href: "/campaigns", requiresAuth: true },
   ];
 
   // No special click handling needed for page navigation
@@ -28,20 +31,34 @@ export function Header() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-foreground text-xl font-semibold">
-              Reward Boost
+            <Link href="/" className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Reward Boost logo"
+                className="h-8 w-8"
+              />
+              <span className="text-foreground text-xl font-semibold">
+                Reward Boost
+              </span>
             </Link>
           </div>
           <nav className="hidden md:flex items-center gap-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-[#888888] hover:text-foreground px-4 py-2 rounded-full font-medium transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              // Hide auth-required items if not connected
+              if (item.requiresAuth && !isConnected) {
+                return null;
+              }
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="text-[#888888] hover:text-foreground px-4 py-2 rounded-full font-medium transition-colors"
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -65,15 +82,22 @@ export function Header() {
                 </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-4 mt-6">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className="text-[#888888] hover:text-foreground justify-start text-lg py-2"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                {navItems.map((item) => {
+                  // Hide auth-required items if not connected
+                  if (item.requiresAuth && !isConnected) {
+                    return null;
+                  }
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="text-[#888888] hover:text-foreground justify-start text-lg py-2"
+                    >
+                      {item.name}
+                    </Link>
+                  );
+                })}
                 <div className="w-full mt-4">
                   <ConnectButton />
                 </div>

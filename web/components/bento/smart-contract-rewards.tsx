@@ -1,5 +1,5 @@
-import type React from "react"
-import { Shield, Coins } from "lucide-react"
+import type React from "react";
+import { Shield, Coins } from "lucide-react";
 
 const SmartContractRewards: React.FC = () => {
   const themeVars = {
@@ -9,7 +9,7 @@ const SmartContractRewards: React.FC = () => {
     "--contract-text-muted": "hsl(var(--muted-foreground))",
     "--contract-border-color": "hsl(var(--border))",
     "--contract-card-bg": "hsl(var(--card) / 0.8)",
-  }
+  };
 
   return (
     <div
@@ -44,7 +44,14 @@ const SmartContractRewards: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
           <Shield size={16} color="var(--contract-primary-color)" />
           <span
             style={{
@@ -91,16 +98,50 @@ const SmartContractRewards: React.FC = () => {
             Contract: 0x742d35Cc6634C0532925a3b8D...
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "8px",
+            }}
+          >
             <div>
-              <div style={{ fontSize: "10px", color: "var(--contract-text-muted)" }}>Total Pool</div>
-              <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--contract-primary-color)" }}>
+              <div
+                style={{
+                  fontSize: "10px",
+                  color: "var(--contract-text-muted)",
+                }}
+              >
+                Total Pool
+              </div>
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "var(--contract-primary-color)",
+                }}
+              >
                 50,000 SEI
               </div>
             </div>
             <div>
-              <div style={{ fontSize: "10px", color: "var(--contract-text-muted)" }}>Participants</div>
-              <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--contract-text-color)" }}>1,247</div>
+              <div
+                style={{
+                  fontSize: "10px",
+                  color: "var(--contract-text-muted)",
+                }}
+              >
+                Participants
+              </div>
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "var(--contract-text-color)",
+                }}
+              >
+                1,247
+              </div>
             </div>
           </div>
 
@@ -124,7 +165,9 @@ const SmartContractRewards: React.FC = () => {
             />
           </div>
 
-          <div style={{ fontSize: "9px", color: "var(--contract-text-muted)" }}>Campaign ends in 2d 14h 32m</div>
+          <div style={{ fontSize: "9px", color: "var(--contract-text-muted)" }}>
+            Campaign ends in 2d 14h 32m
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -186,7 +229,7 @@ const SmartContractRewards: React.FC = () => {
         </span>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SmartContractRewards
+export default SmartContractRewards;

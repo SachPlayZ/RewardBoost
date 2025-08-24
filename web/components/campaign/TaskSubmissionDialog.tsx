@@ -1282,7 +1282,7 @@ export function TaskSubmissionDialog({
                                         }
                                         size="sm"
                                         variant="outline"
-                                        className="bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
+                                        className="bg-black hover:bg-gray-800 border-black text-white"
                                       >
                                         <Twitter className="w-3 h-3 mr-1" />
                                         Post on Twitter
