@@ -12,14 +12,14 @@ export function Footer() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !email.includes("@")) {
       toast.error("Please enter a valid email address");
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       const response = await fetch("/api/newsletter/subscribe", {
         method: "POST",
@@ -89,11 +89,7 @@ export function Footer() {
                 disabled={isLoading}
                 required
               />
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Subscribing..." : "Subscribe"}
               </Button>
             </form>
