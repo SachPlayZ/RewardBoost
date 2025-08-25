@@ -13,6 +13,8 @@ End-to-end template for running on-chain quest campaigns with a modern web app a
 - Participant tracking: quest scores, total quest points and earnings
 - Next.js App Router APIs for campaigns, submissions, uploads, and social integrations
 - Postgres + Prisma schema for campaigns, tasks, submissions, and user profiles
+- Guaranteed Rewards for every participant with on-chain Quest Points
+- AI for Campaign Creation and Tweet Generation
 
 ### Tech Stack
 

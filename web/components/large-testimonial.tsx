@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "next/image";
 
 export function LargeTestimonial() {
   return (
@@ -12,24 +12,10 @@ export function LargeTestimonial() {
                   "RewardBoost's automated campaigns and fair reward system helped us build the most engaged Web3 community in our space."
                 }
               </div>
-              <div className="flex justify-start items-center gap-5">
-                <Image
-                  src="/images/vitalik-buterin.png"
-                  alt="Vitalik Buterin avatar"
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 relative rounded-full"
-                  style={{ border: "1px solid rgba(0, 0, 0, 0.08)" }}
-                />
-                <div className="flex flex-col justify-start items-start">
-                  <div className="text-foreground text-base font-medium leading-6">Vitalik Buterin</div>
-                  <div className="text-muted-foreground text-sm font-normal leading-6">{"Co-founder, Ethereum"}</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

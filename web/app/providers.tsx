@@ -8,6 +8,7 @@ import { RainbowKitProvider, Theme } from "@rainbow-me/rainbowkit";
 import { getConfig } from "./config";
 import { seiTestnet } from "viem/chains";
 import "@sei-js/sei-global-wallet/eip6963";
+import { Toaster } from "@/components/ui/sonner";
 const customTheme: Theme = {
   blurs: {
     modalOverlay: "blur(8px)",
@@ -82,6 +83,7 @@ export function Providers({ children }: Props) {
           initialChain={seiTestnet}
         >
           {children}
+          <Toaster />
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

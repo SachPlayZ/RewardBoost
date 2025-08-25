@@ -5,7 +5,7 @@ import { Providers } from "./providers";
 import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "QuestRewards - Web3 Quest & Reward Platform",
+  title: "RewardBoost - Web3 Quest & Reward Platform",
   description:
     "Create and participate in Web3 quests with blockchain-powered rewards. Build communities, engage users, and earn tokens through gamified experiences.",
 };
